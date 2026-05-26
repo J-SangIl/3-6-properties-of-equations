@@ -137,6 +137,8 @@ export default function App() {
   const [isAnimating, setIsAnimating] = useState(false);
 
   const isSuccess = useMemo(() => {
+    if (gameMode !== GameMode.PROBLEM) return false;
+
     const lx = leftState.xp - leftState.xm;
     const lu = leftState.up - leftState.um;
     const rx = rightState.xp - rightState.xm;
@@ -148,7 +150,7 @@ export default function App() {
     const xOnRight = rx === 1 && ru === 0 && lx === 0;
 
     return (xOnLeft || xOnRight) && phase === Phase.SOLVE;
-  }, [leftState, rightState, phase]);
+  }, [leftState, rightState, phase, gameMode]);
 
   const generateProblem = useCallback(() => {
     // ax + b = cx + d => (a-c)x = d-b
