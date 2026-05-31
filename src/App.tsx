@@ -140,7 +140,7 @@ export default function App() {
 
   const handleStoneSelect = (type: StoneType) => {
     if (pendingType === type) {
-      setPendingCount(prev => Math.min(15, prev + 1));
+      setPendingCount(prev => Math.min(10, prev + 1));
     } else {
       setPendingType(type);
       setPendingCount(1);
@@ -367,23 +367,41 @@ export default function App() {
     return check(l) && check(r);
   };
 
-  const renderStones = (state: SideState) => {
+  const renderXStones = (state: SideState, prefix: string) => {
     const items: React.ReactNode[] = [];
-    const pushItems = (count: number, type: StoneType, keyPrefix: string) => {
-        for (let i = 0; i < count; i++) {
-            items.push(
-                <motion.div layout key={`${keyPrefix}-${i}`}>
-                    <Stone type={type} />
-                </motion.div>
-            );
-        }
-    };
+    for (let i = 0; i < state.xp; i++) {
+        items.push(
+            <motion.div layout key={`${prefix}-xp-${i}`}>
+                <Stone type={StoneType.X_PLUS} />
+            </motion.div>
+        );
+    }
+    for (let i = 0; i < state.xm; i++) {
+        items.push(
+            <motion.div layout key={`${prefix}-xm-${i}`}>
+                <Stone type={StoneType.X_MINUS} />
+            </motion.div>
+        );
+    }
+    return items;
+  };
 
-    pushItems(state.xp, StoneType.X_PLUS, 'xp');
-    pushItems(state.xm, StoneType.X_MINUS, 'xm');
-    pushItems(state.up, StoneType.ONE_PLUS, 'up');
-    pushItems(state.um, StoneType.ONE_MINUS, 'um');
-    
+  const renderUnitStones = (state: SideState, prefix: string) => {
+    const items: React.ReactNode[] = [];
+    for (let i = 0; i < state.up; i++) {
+        items.push(
+            <motion.div layout key={`${prefix}-up-${i}`}>
+                <Stone type={StoneType.ONE_PLUS} />
+            </motion.div>
+        );
+    }
+    for (let i = 0; i < state.um; i++) {
+        items.push(
+            <motion.div layout key={`${prefix}-um-${i}`}>
+                <Stone type={StoneType.ONE_MINUS} />
+            </motion.div>
+        );
+    }
     return items;
   };
 
@@ -503,29 +521,49 @@ export default function App() {
                 <div className="w-40 h-3.5 bg-[#6B7B94] rounded-full -mt-2"></div>
             </div>
 
-            <div className="flex gap-16 w-full mt-40 relative z-10">
-                {/* Left Pan */}
-                <div className="flex-1 flex flex-col items-center relative">
-                    {/* Hanging Line */}
-                    <div className="absolute -top-[160px] left-1/2 -translate-x-1/2 w-0.5 h-[160px] bg-[#D1D9E6]"></div>
-                    <div className="w-full h-44 border-2 border-[#D1D9E6] border-t-0 rounded-b-[40px] relative flex flex-wrap content-end justify-center p-4 pb-6 gap-2 bg-slate-50/30">
-                        <AnimatePresence>
-                            {renderStones(leftState)}
-                        </AnimatePresence>
-                    </div>
-                </div>
-
-                {/* Right Pan */}
-                <div className="flex-1 flex flex-col items-center relative">
+             <div className="flex gap-16 w-full mt-40 relative z-10">
+                 {/* Left Pan */}
+                 <div className="flex-1 flex flex-col items-center relative">
                      {/* Hanging Line */}
-                    <div className="absolute -top-[160px] left-1/2 -translate-x-1/2 w-0.5 h-[160px] bg-[#D1D9E6]"></div>
-                    <div className="w-full h-44 border-2 border-[#D1D9E6] border-t-0 rounded-b-[40px] relative flex flex-wrap content-end justify-center p-4 pb-6 gap-2 bg-slate-50/30">
-                        <AnimatePresence>
-                            {renderStones(rightState)}
-                        </AnimatePresence>
-                    </div>
-                </div>
-            </div>
+                     <div className="absolute -top-[160px] left-1/2 -translate-x-1/2 w-0.5 h-[160px] bg-[#D1D9E6]"></div>
+                     <div className="w-full h-44 border-2 border-[#D1D9E6] border-t-0 rounded-b-[40px] relative flex flex-col justify-end p-4 pb-4 gap-1 bg-slate-50/30">
+                         {/* Upper row for x and -x (윗줄) */}
+                         <div className="flex flex-wrap justify-center items-end gap-1 min-h-[44px]">
+                             <AnimatePresence>
+                                 {renderXStones(leftState, 'left')}
+                             </AnimatePresence>
+                         </div>
+                         
+                         {/* Lower row for 1 and -1 (아랫줄) */}
+                         <div className="flex flex-wrap justify-center items-end gap-1 min-h-[44px]">
+                             <AnimatePresence>
+                                 {renderUnitStones(leftState, 'left')}
+                             </AnimatePresence>
+                         </div>
+                     </div>
+                 </div>
+ 
+                 {/* Right Pan */}
+                 <div className="flex-1 flex flex-col items-center relative">
+                      {/* Hanging Line */}
+                     <div className="absolute -top-[160px] left-1/2 -translate-x-1/2 w-0.5 h-[160px] bg-[#D1D9E6]"></div>
+                     <div className="w-full h-44 border-2 border-[#D1D9E6] border-t-0 rounded-b-[40px] relative flex flex-col justify-end p-4 pb-4 gap-1 bg-slate-50/30">
+                         {/* Upper row for x and -x (윗줄) */}
+                         <div className="flex flex-wrap justify-center items-end gap-1 min-h-[44px]">
+                             <AnimatePresence>
+                                 {renderXStones(rightState, 'right')}
+                             </AnimatePresence>
+                         </div>
+                         
+                         {/* Lower row for 1 and -1 (아랫줄) */}
+                         <div className="flex flex-wrap justify-center items-end gap-1 min-h-[44px]">
+                             <AnimatePresence>
+                                 {renderUnitStones(rightState, 'right')}
+                             </AnimatePresence>
+                         </div>
+                     </div>
+                 </div>
+             </div>
         </div>
 
         {/* Bottom: Controls */}
@@ -535,8 +573,8 @@ export default function App() {
               {/* Left Controls */}
               <div className="grid grid-cols-2 gap-3 p-5 bg-white rounded-2xl shadow-sm border border-slate-100">
                 <button onClick={() => addStone('left', StoneType.X_PLUS)} className="hover:scale-110 transition-transform"><Stone type={StoneType.X_PLUS} /></button>
-                <button onClick={() => addStone('left', StoneType.ONE_PLUS)} className="hover:scale-110 transition-transform"><Stone type={StoneType.ONE_PLUS} /></button>
                 <button onClick={() => addStone('left', StoneType.X_MINUS)} className="hover:scale-110 transition-transform"><Stone type={StoneType.X_MINUS} /></button>
+                <button onClick={() => addStone('left', StoneType.ONE_PLUS)} className="hover:scale-110 transition-transform"><Stone type={StoneType.ONE_PLUS} /></button>
                 <button onClick={() => addStone('left', StoneType.ONE_MINUS)} className="hover:scale-110 transition-transform"><Stone type={StoneType.ONE_MINUS} /></button>
               </div>
 
@@ -558,164 +596,182 @@ export default function App() {
               {/* Right Controls */}
               <div className="grid grid-cols-2 gap-3 p-5 bg-white rounded-2xl shadow-sm border border-slate-100">
                 <button onClick={() => addStone('right', StoneType.X_PLUS)} className="hover:scale-110 transition-transform"><Stone type={StoneType.X_PLUS} /></button>
-                <button onClick={() => addStone('right', StoneType.ONE_PLUS)} className="hover:scale-110 transition-transform"><Stone type={StoneType.ONE_PLUS} /></button>
                 <button onClick={() => addStone('right', StoneType.X_MINUS)} className="hover:scale-110 transition-transform"><Stone type={StoneType.X_MINUS} /></button>
+                <button onClick={() => addStone('right', StoneType.ONE_PLUS)} className="hover:scale-110 transition-transform"><Stone type={StoneType.ONE_PLUS} /></button>
                 <button onClick={() => addStone('right', StoneType.ONE_MINUS)} className="hover:scale-110 transition-transform"><Stone type={StoneType.ONE_MINUS} /></button>
               </div>
             </div>
           ) : (
             <div className="flex flex-wrap gap-4 justify-center max-w-4xl mx-auto">
               {/* Box 1: Stone Selection & Click Incrementer */}
-              <div className="p-5 bg-white rounded-2xl shadow-sm border border-slate-100 flex flex-col gap-2 select-none justify-center">
-                <div className="flex gap-4 items-center justify-center mt-1">
-                  <button 
-                    onClick={() => handleStoneSelect(StoneType.X_PLUS)} 
-                    className={`hover:scale-110 active:scale-95 transition-all p-2 rounded-xl relative group border-2 ${
-                      pendingType === StoneType.X_PLUS 
-                        ? 'border-blue-500 bg-blue-50/20 shadow-sm' 
-                        : 'border-transparent hover:bg-slate-50'
-                    }`}
-                  >
-                    <Stone type={StoneType.X_PLUS} />
-                    {pendingType === StoneType.X_PLUS && pendingCount > 0 && (
-                      <span className="absolute -top-1.5 -right-1.5 bg-blue-600 text-white font-black text-xs px-1.5 py-0.5 rounded-full flex items-center justify-center shadow-md animate-bounce">
-                        +{pendingCount}
-                      </span>
-                    )}
-                  </button>
-                  
-                  <button 
-                    onClick={() => handleStoneSelect(StoneType.X_MINUS)} 
-                    className={`hover:scale-110 active:scale-95 transition-all p-2 rounded-xl relative group border-2 ${
-                      pendingType === StoneType.X_MINUS 
-                        ? 'border-red-500 bg-red-50/20 shadow-sm' 
-                        : 'border-transparent hover:bg-slate-50'
-                    }`}
-                  >
-                    <Stone type={StoneType.X_MINUS} />
-                    {pendingType === StoneType.X_MINUS && pendingCount > 0 && (
-                      <span className="absolute -top-1.5 -right-1.5 bg-red-600 text-white font-black text-xs px-1.5 py-0.5 rounded-full flex items-center justify-center shadow-md animate-bounce">
-                        +{pendingCount}
-                      </span>
-                    )}
-                  </button>
+              <div className="p-5 bg-white rounded-2xl shadow-sm border border-slate-100 grid grid-cols-2 gap-3 select-none justify-center items-center">
+                <button 
+                  onClick={() => handleStoneSelect(StoneType.X_PLUS)} 
+                  className={`hover:scale-110 active:scale-95 transition-all p-2 rounded-xl relative group border-2 ${
+                    pendingType === StoneType.X_PLUS 
+                      ? 'border-blue-500 bg-blue-50/20 shadow-sm' 
+                      : 'border-transparent hover:bg-slate-50'
+                  }`}
+                >
+                  <Stone type={StoneType.X_PLUS} />
+                  {pendingType === StoneType.X_PLUS && pendingCount > 0 && (
+                    <span className="absolute -top-1.5 -right-1.5 bg-blue-600 text-white font-black text-xs px-1.5 py-0.5 rounded-full flex items-center justify-center shadow-md animate-bounce">
+                      +{pendingCount}
+                    </span>
+                  )}
+                </button>
+                
+                <button 
+                  onClick={() => handleStoneSelect(StoneType.X_MINUS)} 
+                  className={`hover:scale-110 active:scale-95 transition-all p-2 rounded-xl relative group border-2 ${
+                    pendingType === StoneType.X_MINUS 
+                      ? 'border-red-500 bg-red-50/20 shadow-sm' 
+                      : 'border-transparent hover:bg-slate-50'
+                  }`}
+                >
+                  <Stone type={StoneType.X_MINUS} />
+                  {pendingType === StoneType.X_MINUS && pendingCount > 0 && (
+                    <span className="absolute -top-1.5 -right-1.5 bg-red-600 text-white font-black text-xs px-1.5 py-0.5 rounded-full flex items-center justify-center shadow-md animate-bounce">
+                      +{pendingCount}
+                    </span>
+                  )}
+                </button>
 
-                  <div className="w-[1px] h-10 bg-slate-100 mx-1"></div>
+                <button 
+                  onClick={() => handleStoneSelect(StoneType.ONE_PLUS)} 
+                  className={`hover:scale-110 active:scale-95 transition-all p-2 rounded-xl relative group border-2 ${
+                    pendingType === StoneType.ONE_PLUS 
+                      ? 'border-blue-500 bg-blue-50/20 shadow-sm' 
+                      : 'border-transparent hover:bg-slate-50'
+                  }`}
+                >
+                  <Stone type={StoneType.ONE_PLUS} />
+                  {pendingType === StoneType.ONE_PLUS && pendingCount > 0 && (
+                    <span className="absolute -top-1.5 -right-1.5 bg-blue-600 text-white font-black text-xs px-1.5 py-0.5 rounded-full flex items-center justify-center shadow-md animate-bounce">
+                      +{pendingCount}
+                    </span>
+                  )}
+                </button>
 
-                  <button 
-                    onClick={() => handleStoneSelect(StoneType.ONE_PLUS)} 
-                    className={`hover:scale-110 active:scale-95 transition-all p-2 rounded-xl relative group border-2 ${
-                      pendingType === StoneType.ONE_PLUS 
-                        ? 'border-blue-500 bg-blue-50/20 shadow-sm' 
-                        : 'border-transparent hover:bg-slate-50'
-                    }`}
-                  >
-                    <Stone type={StoneType.ONE_PLUS} />
-                    {pendingType === StoneType.ONE_PLUS && pendingCount > 0 && (
-                      <span className="absolute -top-1.5 -right-1.5 bg-blue-600 text-white font-black text-xs px-1.5 py-0.5 rounded-full flex items-center justify-center shadow-md animate-bounce">
-                        +{pendingCount}
-                      </span>
-                    )}
-                  </button>
-
-                  <button 
-                    onClick={() => handleStoneSelect(StoneType.ONE_MINUS)} 
-                    className={`hover:scale-110 active:scale-95 transition-all p-2 rounded-xl relative group border-2 ${
-                      pendingType === StoneType.ONE_MINUS 
-                        ? 'border-red-500 bg-red-50/20 shadow-sm' 
-                        : 'border-transparent hover:bg-slate-50'
-                    }`}
-                  >
-                    <Stone type={StoneType.ONE_MINUS} />
-                    {pendingType === StoneType.ONE_MINUS && pendingCount > 0 && (
-                      <span className="absolute -top-1.5 -right-1.5 bg-red-600 text-white font-black text-xs px-1.5 py-0.5 rounded-full flex items-center justify-center shadow-md animate-bounce">
-                        +{pendingCount}
-                      </span>
-                    )}
-                  </button>
-                </div>
+                <button 
+                  onClick={() => handleStoneSelect(StoneType.ONE_MINUS)} 
+                  className={`hover:scale-110 active:scale-95 transition-all p-2 rounded-xl relative group border-2 ${
+                    pendingType === StoneType.ONE_MINUS 
+                      ? 'border-red-500 bg-red-50/20 shadow-sm' 
+                      : 'border-transparent hover:bg-slate-50'
+                  }`}
+                >
+                  <Stone type={StoneType.ONE_MINUS} />
+                  {pendingType === StoneType.ONE_MINUS && pendingCount > 0 && (
+                    <span className="absolute -top-1.5 -right-1.5 bg-red-600 text-white font-black text-xs px-1.5 py-0.5 rounded-full flex items-center justify-center shadow-md animate-bounce">
+                      +{pendingCount}
+                    </span>
+                  )}
+                </button>
               </div>
 
               {/* Box 2: Staging Action panel (Add to both side button) */}
-              <div className="p-4 bg-white rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center justify-center gap-1.5 min-w-[220px] select-none">
-                {pendingType && pendingCount > 0 ? (
-                  <div className="flex flex-col items-center w-full gap-2">
-                    {/* Visual stones list preview */}
-                    <div className="flex flex-wrap gap-1 items-center justify-center bg-slate-50 border border-slate-100 p-2 rounded-xl w-full h-[68px] overflow-y-auto">
+              <div className="p-4 bg-white rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center justify-between w-[220px] h-[196px] select-none">
+                {/* Visual stones list preview */}
+                <div className={`p-2 rounded-xl w-full h-[96px] min-h-[96px] max-h-[96px] flex items-center justify-center ${
+                  pendingType && pendingCount > 0 
+                    ? 'bg-slate-50 border border-slate-100 overflow-hidden' 
+                    : 'bg-slate-50/50 border border-dashed border-slate-200'
+                }`}>
+                  {pendingType && pendingCount > 0 ? (
+                    <div className="grid grid-cols-5 gap-x-1.5 gap-y-1 justify-items-center items-center mx-auto">
                       {Array.from({ length: pendingCount }).map((_, i) => (
-                        <div key={i} className="scale-75 origin-center">
+                        <div key={i} className="scale-75 origin-center animate-fade-in">
                           <Stone type={pendingType} />
                         </div>
                       ))}
                     </div>
+                  ) : (
+                    <span className="text-[10px] text-slate-300 font-bold"></span>
+                  )}
+                </div>
 
-                    <div className="flex gap-2 w-full mt-1">
-                      <button 
-                        onClick={clearPending}
-                        className="py-1 px-2.5 bg-slate-100 hover:bg-slate-200 text-slate-500 font-bold text-xs rounded-xl transition-colors"
-                        title="취소"
-                      >
-                        취소
-                      </button>
-                      <div className="flex items-center bg-slate-50 rounded-xl overflow-hidden border border-slate-100 flex-1 justify-between">
-                        <button 
-                          onClick={() => setPendingCount(prev => Math.max(1, prev - 1))}
-                          className="px-2 py-1 hover:bg-slate-200 font-extrabold text-slate-600 text-xs transition-colors"
-                        >
-                          -
-                        </button>
-                        <span className="font-extrabold text-slate-700 text-xs">{pendingCount}</span>
-                        <button 
-                          onClick={() => setPendingCount(prev => Math.min(15, prev + 1))}
-                          className="px-2 py-1 hover:bg-slate-200 font-extrabold text-slate-600 text-xs transition-colors"
-                        >
-                          +
-                        </button>
-                      </div>
-                    </div>
-
-                    <button
-                      onClick={handleApplyPending}
-                      disabled={isAnimating}
-                      className="w-full mt-0.5 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-black text-xs rounded-xl shadow-md transition-all active:scale-98 animate-pulse"
-                    >
-                      추가하기
-                    </button>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center p-2 text-center w-full h-full gap-2">
-                    {/* Empty preview container to match height and keep UI stable */}
-                    <div className="flex flex-wrap gap-1 items-center justify-center bg-slate-50/50 border border-dashed border-slate-200 p-2 rounded-xl w-full h-[68px]">
-                    </div>
-                    <button
-                      disabled
-                      className="w-full py-2 bg-slate-100 text-slate-300 font-bold text-xs rounded-xl cursor-not-allowed"
-                    >
-                      추가하기
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {/* Box 4: Multipliers */}
-              <div className="p-4 bg-white rounded-2xl shadow-sm border border-slate-100 grid grid-cols-2 gap-2">
-                {[2, 3, 5, 7].map(n => (
-                  <button key={n} onClick={() => multiplyBoth(n)} className="w-12 h-10 border border-slate-200 rounded-lg font-bold text-blue-600 hover:bg-blue-50 transition-colors">x{n}</button>
-                ))}
-              </div>
-
-              {/* Box 5: Divisors */}
-              <div className="p-4 bg-white rounded-2xl shadow-sm border border-slate-100 grid grid-cols-2 gap-2">
-                {[2, 3, 5, 7].map(n => (
+                {/* Controls (Cancel and Count Adjuster) */}
+                <div className={`flex gap-2 w-full transition-all duration-150 ${
+                  pendingType && pendingCount > 0 ? 'opacity-100' : 'opacity-0 pointer-events-none'
+                }`}>
                   <button 
-                    key={n} 
-                    disabled={!canDivide(n)}
-                    onClick={() => divideBoth(n)} 
-                    className="w-12 h-10 border border-slate-200 rounded-lg font-bold text-blue-600 hover:bg-blue-50 transition-colors disabled:opacity-20 flex items-center justify-center"
-                   >
-                       ÷{n}
+                    onClick={clearPending}
+                    disabled={!pendingType}
+                    className="py-1 px-2.5 bg-slate-100 hover:bg-slate-200 text-slate-500 font-bold text-xs rounded-xl transition-colors"
+                  >
+                    취소
+                  </button>
+                  <div className="flex items-center bg-slate-50 rounded-xl overflow-hidden border border-slate-100 flex-1 justify-between">
+                    <button 
+                      onClick={() => setPendingCount(prev => Math.max(1, prev - 1))}
+                      disabled={!pendingType}
+                      className="px-2 py-1 hover:bg-slate-200 font-extrabold text-slate-600 text-xs transition-colors"
+                    >
+                      -
                     </button>
-                ))}
+                    <span className="font-extrabold text-slate-700 text-xs">{pendingCount}</span>
+                    <button 
+                      onClick={() => setPendingCount(prev => Math.min(10, prev + 1))}
+                      disabled={!pendingType}
+                      className="px-2 py-1 hover:bg-slate-200 font-extrabold text-slate-600 text-xs transition-colors"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+
+                {/* Apply Button */}
+                <button
+                  onClick={handleApplyPending}
+                  disabled={isAnimating || !pendingType || pendingCount === 0}
+                  className={`w-full py-2 font-black text-xs rounded-xl transition-all ${
+                    pendingType && pendingCount > 0
+                      ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-md active:scale-98 animate-pulse cursor-pointer'
+                      : 'bg-slate-100 text-slate-300 cursor-not-allowed'
+                  }`}
+                >
+                  추가하기
+                </button>
+              </div>
+
+              {/* Combined Box 4: Multipliers & Divisors */}
+              <div className="p-4 bg-white rounded-2xl shadow-sm border border-slate-100 flex gap-4 select-none h-[196px] items-center">
+                {/* Multipliers column */}
+                <div className="flex flex-col gap-1.5 items-center justify-center">
+                  <span className="text-[10px] font-black text-slate-400">곱하기</span>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[2, 3, 5, 7].map(n => (
+                      <button 
+                        key={n} 
+                        onClick={() => multiplyBoth(n)} 
+                        className="w-12 h-10 border border-slate-200 rounded-lg font-bold text-blue-600 hover:bg-blue-50 transition-colors active:scale-95 text-sm"
+                      >
+                        x{n}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Divider line */}
+                <div className="w-[1px] bg-slate-100 self-stretch my-2"></div>
+
+                {/* Divisors column */}
+                <div className="flex flex-col gap-1.5 items-center justify-center">
+                  <span className="text-[10px] font-black text-slate-400">나누기</span>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[2, 3, 5, 7].map(n => (
+                      <button 
+                        key={n} 
+                        disabled={!canDivide(n)}
+                        onClick={() => divideBoth(n)} 
+                        className="w-12 h-10 border border-slate-200 rounded-lg font-bold text-blue-600 hover:bg-blue-50 transition-colors disabled:opacity-20 flex items-center justify-center active:scale-95 text-sm"
+                      >
+                        ÷{n}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
 
               {/* Box 3: Settle / Simplify */}
