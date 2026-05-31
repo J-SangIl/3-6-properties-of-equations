@@ -600,7 +600,7 @@ export default function App() {
                       <p className="text-slate-600 text-sm font-bold leading-relaxed text-left mt-2">
                         {tutorialStep === 1 && "왼쪽 돌 선택 상자에서 [-1] 단추를 누르고 개수를 3개로 맞춘 다음, [추가하기]를 눌러 양쪽에 똑같이 추가해 보세요!"}
                         {tutorialStep === 2 && "양수 돌과 음수 돌이 함께 있을 때, 우측 아래의 [상쇄하기] 버튼을 누르면 반대되는 돌들이 서로 매칭되어 깔끔하게 사라집니다!"}
-                        {tutorialStep === 3 && "오른쪽 나누기 상자에서 [ ÷2 ]를 누르면 양팔저울의 무게를 똑같이 2로 나눌 수 있습니다. 최종 해를 구해보세요!"}
+                        {tutorialStep === 3 && "나누기 상자에서 [÷2]를 누르면 양 쪽 저울에 있는 돌의 개수를 2로 나눌 수 있습니다. 최종 답을 구해보세요!"}
                       </p>
                     </div>
                   </div>
@@ -621,7 +621,7 @@ export default function App() {
               )}
 
               {/* Center: Scale */}
-              <div className="relative h-[420px] flex flex-col items-center justify-center px-12 bg-white mb-4">
+              <div className="relative h-[280px] flex flex-col items-center justify-center px-12 bg-white mb-2">
                   {/* Success Announcement */}
                   <AnimatePresence>
                       {isSuccess && (
@@ -632,27 +632,14 @@ export default function App() {
                               className="absolute inset-0 z-40 bg-white/40 flex flex-col items-center justify-center p-8 text-center animate-fade-in"
                           >
                               <div className="bg-white p-10 rounded-[3rem] shadow-2xl border border-slate-200/80 flex flex-col items-center max-w-sm">
-                                  <motion.div 
-                                      animate={{ y: [0, -10, 0] }} 
-                                      transition={{ repeat: Infinity, duration: 2 }}
-                                      className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center text-white shadow-xl mb-6"
-                                  >
-                                      <Check size={40} strokeWidth={4} />
-                                  </motion.div>
                                   <h3 className="text-3xl font-black text-slate-800 mb-4">성공!</h3>
 
-                                  <div className="mb-6 p-4 bg-emerald-50 border border-emerald-100 rounded-2xl text-emerald-800 text-xs font-bold leading-relaxed text-left">
-                                      {isTutorial ? (
-                                        <>
-                                          🎉 축하합니다! 드디어 해결하셨습니다.<br/><br/>
-                                          우리의 <strong>최종 목표</strong>는 이렇게 <strong className="text-emerald-950 font-black">한쪽 저울에는 x 돌 1개만, 다른 쪽 저울에는 숫자 돌만</strong> 남겨두어 x의 무게를 알아내는 것입니다!
-                                        </>
-                                      ) : (
-                                        <>
-                                          🎉 축하합니다! <strong className="text-emerald-950 font-black">한쪽 저울에는 x 돌 1개만, 다른 쪽 저울에는 숫자 돌만</strong> 남겨야 한다는 양팔저울 해결 규칙에 잘 맞춰 방정식 풀이에 완벽히 성공하셨습니다!
-                                        </>
-                                      )}
-                                  </div>
+                                  {isTutorial && (
+                                    <div className="mb-6 p-4 bg-emerald-50 border border-emerald-100 rounded-2xl text-emerald-800 text-xs font-bold leading-relaxed text-left">
+                                      🎉 축하합니다! 드디어 해결하셨습니다.<br/><br/>
+                                      우리의 <strong>최종 목표</strong>는 이렇게 <strong className="text-emerald-950 font-black">한쪽 저울에는 x 돌 1개만, 다른 쪽 저울에는 숫자 돌만</strong> 남겨두어 x의 무게를 알아내는 것입니다!
+                                    </div>
+                                  )}
                                   
                                   <div className="flex flex-col gap-3 w-full">
                                       {gameMode === GameMode.PROBLEM && (
@@ -693,34 +680,34 @@ export default function App() {
                 </AnimatePresence>
 
                 {/* Beam */}
-            <div className="absolute top-[60px] left-10 right-10 h-3 bg-[#8D9CB4] rounded-full shadow-sm z-30"></div>
+            <div className="absolute top-[35px] left-10 right-10 h-3 bg-[#8D9CB4] rounded-full shadow-sm z-30"></div>
             
             {/* Scale Pivot area */}
-            <div className="absolute top-[60px] left-1/2 -translate-x-1/2 flex flex-col items-center">
+            <div className="absolute top-[35px] left-1/2 -translate-x-1/2 flex flex-col items-center">
                 <div className="w-4 h-4 rounded-full border-4 border-white bg-[#8D9CB4] -mt-1.5 z-40"></div>
                 {/* Vertical support */}
-                <div className="w-3 h-64 bg-[#8D9CB4] -mt-0.5"></div>
+                <div className="w-3 h-[160px] bg-[#8D9CB4] -mt-0.5"></div>
                 {/* Pivot Diamond */}
                 <div className="w-12 h-12 bg-[#CED9E5] rotate-45 border-4 border-white shadow-sm -mt-6"></div>
                 {/* Base */}
                 <div className="w-40 h-3.5 bg-[#6B7B94] rounded-full -mt-2"></div>
             </div>
 
-             <div className="flex gap-16 w-full mt-40 relative z-10">
+             <div className="flex gap-16 w-full mt-24 relative z-10">
                  {/* Left Pan */}
                  <div className="flex-1 flex flex-col items-center relative">
                      {/* Hanging Line */}
-                     <div className="absolute -top-[160px] left-1/2 -translate-x-1/2 w-0.5 h-[160px] bg-[#D1D9E6]"></div>
-                     <div className="w-full h-44 border-2 border-[#D1D9E6] border-t-0 rounded-b-[40px] relative flex flex-col justify-end p-4 pb-4 gap-1 bg-slate-50/30">
+                     <div className="absolute -top-[96px] left-1/2 -translate-x-1/2 w-0.5 h-[96px] bg-[#D1D9E6]"></div>
+                     <div className="w-full h-32 border-2 border-[#D1D9E6] border-t-0 rounded-b-[32px] relative flex flex-col justify-end p-3 pb-3 gap-0.5 bg-slate-50/30">
                          {/* Upper row for x and -x (윗줄) */}
-                         <div className="flex flex-wrap justify-center items-end gap-1 min-h-[44px]">
+                         <div className="flex flex-wrap justify-center items-end gap-1 min-h-[34px]">
                              <AnimatePresence>
                                  {renderXStones(leftState, 'left')}
                              </AnimatePresence>
                          </div>
                          
                          {/* Lower row for 1 and -1 (아랫줄) */}
-                         <div className="flex flex-wrap justify-center items-end gap-1 min-h-[44px]">
+                         <div className="flex flex-wrap justify-center items-end gap-1 min-h-[34px]">
                              <AnimatePresence>
                                  {renderUnitStones(leftState, 'left')}
                              </AnimatePresence>
@@ -731,17 +718,17 @@ export default function App() {
                  {/* Right Pan */}
                  <div className="flex-1 flex flex-col items-center relative">
                       {/* Hanging Line */}
-                     <div className="absolute -top-[160px] left-1/2 -translate-x-1/2 w-0.5 h-[160px] bg-[#D1D9E6]"></div>
-                     <div className="w-full h-44 border-2 border-[#D1D9E6] border-t-0 rounded-b-[40px] relative flex flex-col justify-end p-4 pb-4 gap-1 bg-slate-50/30">
+                     <div className="absolute -top-[96px] left-1/2 -translate-x-1/2 w-0.5 h-[96px] bg-[#D1D9E6]"></div>
+                     <div className="w-full h-32 border-2 border-[#D1D9E6] border-t-0 rounded-b-[32px] relative flex flex-col justify-end p-3 pb-3 gap-0.5 bg-slate-50/30">
                          {/* Upper row for x and -x (윗줄) */}
-                         <div className="flex flex-wrap justify-center items-end gap-1 min-h-[44px]">
+                         <div className="flex flex-wrap justify-center items-end gap-1 min-h-[34px]">
                              <AnimatePresence>
                                  {renderXStones(rightState, 'right')}
                              </AnimatePresence>
                          </div>
                          
                          {/* Lower row for 1 and -1 (아랫줄) */}
-                         <div className="flex flex-wrap justify-center items-end gap-1 min-h-[44px]">
+                         <div className="flex flex-wrap justify-center items-end gap-1 min-h-[34px]">
                              <AnimatePresence>
                                  {renderUnitStones(rightState, 'right')}
                              </AnimatePresence>
@@ -928,13 +915,13 @@ export default function App() {
                 {/* Apply Button */}
                 <button
                   onClick={handleApplyPending}
-                  disabled={isAnimating || !pendingType || pendingCount === 0}
+                  disabled={isAnimating || !pendingType || pendingCount === 0 || (isTutorial && tutorialStep === 1 && (pendingType !== StoneType.ONE_MINUS || pendingCount !== 3))}
                   className={`w-full py-2 font-black text-xs rounded-xl transition-all ${
-                    pendingType && pendingCount > 0
+                    pendingType && pendingCount > 0 && !(isTutorial && tutorialStep === 1 && (pendingType !== StoneType.ONE_MINUS || pendingCount !== 3))
                       ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-md active:scale-98 animate-pulse cursor-pointer'
                       : 'bg-slate-100 text-slate-300 cursor-not-allowed'
                   } ${
-                    isTutorial && tutorialStep === 1 && pendingType === StoneType.ONE_MINUS && pendingCount >= 3
+                    isTutorial && tutorialStep === 1 && pendingType === StoneType.ONE_MINUS && pendingCount === 3
                       ? 'ring-4 ring-indigo-500 ring-offset-1 animate-pulse scale-102 font-extrabold text-[#ffffff]'
                       : ''
                   }`}
