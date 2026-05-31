@@ -135,9 +135,64 @@ export default function App() {
   const [leftState, setLeftState] = useState<SideState>({ xp: 0, xm: 0, up: 0, um: 0 });
   const [rightState, setRightState] = useState<SideState>({ xp: 0, xm: 0, up: 0, um: 0 });
   const [isAnimating, setIsAnimating] = useState(false);
+  const [pendingType, setPendingType] = useState<StoneType | null>(null);
+  const [pendingCount, setPendingCount] = useState<number>(0);
+
+  const handleStoneSelect = (type: StoneType) => {
+    if (pendingType === type) {
+      setPendingCount(prev => Math.min(15, prev + 1));
+    } else {
+      setPendingType(type);
+      setPendingCount(1);
+    }
+  };
+
+  const handleApplyPending = async () => {
+    if (!pendingType || pendingCount <= 0 || isAnimating) return;
+    const currentType = pendingType;
+    const currentCount = pendingCount;
+    setPendingType(null);
+    setPendingCount(0);
+    await applyBoth(currentType, currentCount);
+  };
+
+  const clearPending = () => {
+    setPendingType(null);
+    setPendingCount(0);
+  };
+
+  const canSettle = (): boolean => {
+    return (
+      (leftState.xp > 0 && leftState.xm > 0) ||
+      (leftState.up > 0 && leftState.um > 0) ||
+      (rightState.xp > 0 && rightState.xm > 0) ||
+      (rightState.up > 0 && rightState.um > 0)
+    );
+  };
+
+  const handleSettleBoth = async () => {
+    if (isAnimating || !canSettle()) return;
+    setIsAnimating(true);
+    
+    // Settle both sides
+    setLeftState(prev => settle(prev));
+    setRightState(prev => settle(prev));
+
+    await new Promise(resolve => setTimeout(resolve, 600));
+    setIsAnimating(false);
+  };
 
   const isSuccess = useMemo(() => {
     if (gameMode !== GameMode.PROBLEM) return false;
+
+    // Must not have any opposing stones that can still be settled (상쇄하기)
+    const oppositesCanSettle = (
+      (leftState.xp > 0 && leftState.xm > 0) ||
+      (leftState.up > 0 && leftState.um > 0) ||
+      (rightState.xp > 0 && rightState.xm > 0) ||
+      (rightState.up > 0 && rightState.um > 0)
+    );
+    if (oppositesCanSettle) return false;
 
     const lx = leftState.xp - leftState.xm;
     const lu = leftState.up - leftState.um;
@@ -196,12 +251,16 @@ export default function App() {
     setPhase(Phase.SETUP);
     setLeftState({ xp: 0, xm: 0, up: 0, um: 0 });
     setRightState({ xp: 0, xm: 0, up: 0, um: 0 });
+    setPendingType(null);
+    setPendingCount(0);
   };
 
   const startProblem = () => {
     setGameMode(GameMode.PROBLEM);
     setPhase(Phase.SOLVE);
     generateProblem();
+    setPendingType(null);
+    setPendingCount(0);
   };
 
   const settle = (side: SideState): SideState => {
@@ -232,18 +291,18 @@ export default function App() {
     });
   };
 
-  const applyBoth = async (type: StoneType) => {
-    if (isAnimating) return;
+  const applyBoth = async (type: StoneType, count: number) => {
+    if (isAnimating || count <= 0) return;
     setIsAnimating(true);
     
     // Step 1: Add raw stone to both sides
     const updater = (prev: SideState) => {
       let next = { ...prev };
       switch (type) {
-        case StoneType.X_PLUS: next.xp += 1; break;
-        case StoneType.X_MINUS: next.xm += 1; break;
-        case StoneType.ONE_PLUS: next.up += 1; break;
-        case StoneType.ONE_MINUS: next.um += 1; break;
+        case StoneType.X_PLUS: next.xp += count; break;
+        case StoneType.X_MINUS: next.xm += count; break;
+        case StoneType.ONE_PLUS: next.up += count; break;
+        case StoneType.ONE_MINUS: next.um += count; break;
       }
       return next;
     };
@@ -251,14 +310,8 @@ export default function App() {
     setLeftState(updater);
     setRightState(updater);
 
-    // Step 2: 0.4s delay
-    await new Promise(resolve => setTimeout(resolve, 400));
-    
-    // Step 3: Settle (cancel out opposites)
-    setLeftState(prev => settle(prev));
-    setRightState(prev => settle(prev));
-
-    await new Promise(resolve => setTimeout(resolve, 200));
+    // Step 2: 0.5s delay
+    await new Promise(resolve => setTimeout(resolve, 500));
     setIsAnimating(false);
   };
 
@@ -512,16 +565,136 @@ export default function App() {
             </div>
           ) : (
             <div className="flex flex-wrap gap-4 justify-center max-w-4xl mx-auto">
-              {/* Box 1: x operations */}
-              <div className="p-4 bg-white rounded-2xl shadow-sm border border-slate-100 flex gap-4 items-center">
-                <button onClick={() => applyBoth(StoneType.X_PLUS)} className="hover:scale-110 transition-transform"><Stone type={StoneType.X_PLUS} /></button>
-                <button onClick={() => applyBoth(StoneType.X_MINUS)} className="hover:scale-110 transition-transform"><Stone type={StoneType.X_MINUS} /></button>
+              {/* Box 1: Stone Selection & Click Incrementer */}
+              <div className="p-5 bg-white rounded-2xl shadow-sm border border-slate-100 flex flex-col gap-2 select-none justify-center">
+                <div className="flex gap-4 items-center justify-center mt-1">
+                  <button 
+                    onClick={() => handleStoneSelect(StoneType.X_PLUS)} 
+                    className={`hover:scale-110 active:scale-95 transition-all p-2 rounded-xl relative group border-2 ${
+                      pendingType === StoneType.X_PLUS 
+                        ? 'border-blue-500 bg-blue-50/20 shadow-sm' 
+                        : 'border-transparent hover:bg-slate-50'
+                    }`}
+                  >
+                    <Stone type={StoneType.X_PLUS} />
+                    {pendingType === StoneType.X_PLUS && pendingCount > 0 && (
+                      <span className="absolute -top-1.5 -right-1.5 bg-blue-600 text-white font-black text-xs px-1.5 py-0.5 rounded-full flex items-center justify-center shadow-md animate-bounce">
+                        +{pendingCount}
+                      </span>
+                    )}
+                  </button>
+                  
+                  <button 
+                    onClick={() => handleStoneSelect(StoneType.X_MINUS)} 
+                    className={`hover:scale-110 active:scale-95 transition-all p-2 rounded-xl relative group border-2 ${
+                      pendingType === StoneType.X_MINUS 
+                        ? 'border-red-500 bg-red-50/20 shadow-sm' 
+                        : 'border-transparent hover:bg-slate-50'
+                    }`}
+                  >
+                    <Stone type={StoneType.X_MINUS} />
+                    {pendingType === StoneType.X_MINUS && pendingCount > 0 && (
+                      <span className="absolute -top-1.5 -right-1.5 bg-red-600 text-white font-black text-xs px-1.5 py-0.5 rounded-full flex items-center justify-center shadow-md animate-bounce">
+                        +{pendingCount}
+                      </span>
+                    )}
+                  </button>
+
+                  <div className="w-[1px] h-10 bg-slate-100 mx-1"></div>
+
+                  <button 
+                    onClick={() => handleStoneSelect(StoneType.ONE_PLUS)} 
+                    className={`hover:scale-110 active:scale-95 transition-all p-2 rounded-xl relative group border-2 ${
+                      pendingType === StoneType.ONE_PLUS 
+                        ? 'border-blue-500 bg-blue-50/20 shadow-sm' 
+                        : 'border-transparent hover:bg-slate-50'
+                    }`}
+                  >
+                    <Stone type={StoneType.ONE_PLUS} />
+                    {pendingType === StoneType.ONE_PLUS && pendingCount > 0 && (
+                      <span className="absolute -top-1.5 -right-1.5 bg-blue-600 text-white font-black text-xs px-1.5 py-0.5 rounded-full flex items-center justify-center shadow-md animate-bounce">
+                        +{pendingCount}
+                      </span>
+                    )}
+                  </button>
+
+                  <button 
+                    onClick={() => handleStoneSelect(StoneType.ONE_MINUS)} 
+                    className={`hover:scale-110 active:scale-95 transition-all p-2 rounded-xl relative group border-2 ${
+                      pendingType === StoneType.ONE_MINUS 
+                        ? 'border-red-500 bg-red-50/20 shadow-sm' 
+                        : 'border-transparent hover:bg-slate-50'
+                    }`}
+                  >
+                    <Stone type={StoneType.ONE_MINUS} />
+                    {pendingType === StoneType.ONE_MINUS && pendingCount > 0 && (
+                      <span className="absolute -top-1.5 -right-1.5 bg-red-600 text-white font-black text-xs px-1.5 py-0.5 rounded-full flex items-center justify-center shadow-md animate-bounce">
+                        +{pendingCount}
+                      </span>
+                    )}
+                  </button>
+                </div>
               </div>
 
-              {/* Box 2: unit operations */}
-              <div className="p-4 bg-white rounded-2xl shadow-sm border border-slate-100 flex gap-4 items-center">
-                <button onClick={() => applyBoth(StoneType.ONE_PLUS)} className="hover:scale-110 transition-transform"><Stone type={StoneType.ONE_PLUS} /></button>
-                <button onClick={() => applyBoth(StoneType.ONE_MINUS)} className="hover:scale-110 transition-transform"><Stone type={StoneType.ONE_MINUS} /></button>
+              {/* Box 2: Staging Action panel (Add to both side button) */}
+              <div className="p-4 bg-white rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center justify-center gap-1.5 min-w-[220px] select-none">
+                {pendingType && pendingCount > 0 ? (
+                  <div className="flex flex-col items-center w-full gap-2">
+                    {/* Visual stones list preview */}
+                    <div className="flex flex-wrap gap-1 items-center justify-center bg-slate-50 border border-slate-100 p-2 rounded-xl w-full h-[68px] overflow-y-auto">
+                      {Array.from({ length: pendingCount }).map((_, i) => (
+                        <div key={i} className="scale-75 origin-center">
+                          <Stone type={pendingType} />
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="flex gap-2 w-full mt-1">
+                      <button 
+                        onClick={clearPending}
+                        className="py-1 px-2.5 bg-slate-100 hover:bg-slate-200 text-slate-500 font-bold text-xs rounded-xl transition-colors"
+                        title="취소"
+                      >
+                        취소
+                      </button>
+                      <div className="flex items-center bg-slate-50 rounded-xl overflow-hidden border border-slate-100 flex-1 justify-between">
+                        <button 
+                          onClick={() => setPendingCount(prev => Math.max(1, prev - 1))}
+                          className="px-2 py-1 hover:bg-slate-200 font-extrabold text-slate-600 text-xs transition-colors"
+                        >
+                          -
+                        </button>
+                        <span className="font-extrabold text-slate-700 text-xs">{pendingCount}</span>
+                        <button 
+                          onClick={() => setPendingCount(prev => Math.min(15, prev + 1))}
+                          className="px-2 py-1 hover:bg-slate-200 font-extrabold text-slate-600 text-xs transition-colors"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={handleApplyPending}
+                      disabled={isAnimating}
+                      className="w-full mt-0.5 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-black text-xs rounded-xl shadow-md transition-all active:scale-98 animate-pulse"
+                    >
+                      추가하기
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center p-2 text-center w-full h-full gap-2">
+                    {/* Empty preview container to match height and keep UI stable */}
+                    <div className="flex flex-wrap gap-1 items-center justify-center bg-slate-50/50 border border-dashed border-slate-200 p-2 rounded-xl w-full h-[68px]">
+                    </div>
+                    <button
+                      disabled
+                      className="w-full py-2 bg-slate-100 text-slate-300 font-bold text-xs rounded-xl cursor-not-allowed"
+                    >
+                      추가하기
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* Box 4: Multipliers */}
@@ -545,11 +718,21 @@ export default function App() {
                 ))}
               </div>
 
-              {/* Box 3: Flip */}
+              {/* Box 3: Settle / Simplify */}
               <div className="p-4 bg-white rounded-2xl shadow-sm border border-slate-100 flex items-center justify-center">
-                <button onClick={flipSigns} className="flex flex-col items-center justify-center font-bold text-xs text-slate-600 hover:bg-slate-50 transition-colors w-24 h-20 p-2 rounded-xl border border-slate-100">
-                    <span>부호 바꾸기</span>
-                    <span className="text-base text-blue-600">×(-1)</span>
+                <button 
+                  onClick={handleSettleBoth} 
+                  disabled={isAnimating || !canSettle()}
+                  className={`flex flex-col items-center justify-center font-bold text-xs w-24 h-20 p-2 rounded-xl border transition-all active:scale-95 ${
+                    canSettle()
+                      ? 'border-indigo-100 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 hover:border-indigo-250 shadow-sm shadow-indigo-100 cursor-pointer animate-pulse-slow'
+                      : 'border-slate-100 text-slate-300 bg-slate-50 opacity-40 cursor-not-allowed'
+                  }`}
+                >
+                    <span className="text-sm font-black">상쇄하기</span>
+                    {canSettle() && (
+                      <span className="text-[10px] text-indigo-500 mt-1">정리 가능</span>
+                    )}
                 </button>
               </div>
 
