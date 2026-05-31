@@ -138,6 +138,13 @@ export default function App() {
   const [pendingType, setPendingType] = useState<StoneType | null>(null);
   const [pendingCount, setPendingCount] = useState<number>(0);
 
+  // Score & Tutorial States for Problem Mode
+  const [solvedCount, setSolvedCount] = useState<number>(0);
+  const [hasCredited, setHasCredited] = useState<boolean>(false);
+  const [isTutorial, setIsTutorial] = useState<boolean>(false);
+  const [tutorialStep, setTutorialStep] = useState<number>(0);
+  const [hasSeenTutorial, setHasSeenTutorial] = useState<boolean>(false);
+
   const handleStoneSelect = (type: StoneType) => {
     if (pendingType === type) {
       setPendingCount(prev => Math.min(10, prev + 1));
@@ -207,7 +214,32 @@ export default function App() {
     return (xOnLeft || xOnRight) && phase === Phase.SOLVE;
   }, [leftState, rightState, phase, gameMode]);
 
+  // Score Crediting
+  useEffect(() => {
+    if (isSuccess && !hasCredited) {
+      setSolvedCount(prev => prev + 1);
+      setHasCredited(true);
+    }
+  }, [isSuccess, hasCredited]);
+
+  // Interactive Tutorial Step Control
+  useEffect(() => {
+    if (!isTutorial) return;
+    if (tutorialStep === 1) {
+      if (leftState.um >= 3 && rightState.um >= 3) {
+        setTutorialStep(2);
+      }
+    } else if (tutorialStep === 2) {
+      if (leftState.um === 0 && leftState.up === 0 && rightState.um === 0 && rightState.up === 4) {
+        setTutorialStep(3);
+      }
+    } else if (tutorialStep === 3) {
+      // Step 3 leads to resolution where isSuccess is met
+    }
+  }, [isTutorial, tutorialStep, leftState, rightState]);
+
   const generateProblem = useCallback(() => {
+    setHasCredited(false);
     // ax + b = cx + d => (a-c)x = d-b
     // To ensure integer solution, pick x first
     const solution = Math.floor(Math.random() * 11) - 5; // x between -5 and 5
@@ -238,7 +270,13 @@ export default function App() {
   }, []);
 
   const reset = () => {
-    if (gameMode === GameMode.PROBLEM) {
+    if (isTutorial) {
+      setLeftState({ xp: 2, xm: 0, up: 3, um: 0 });
+      setRightState({ xp: 0, xm: 0, up: 7, um: 0 });
+      setTutorialStep(0);
+      setPendingType(null);
+      setPendingCount(0);
+    } else if (gameMode === GameMode.PROBLEM) {
         generateProblem();
     } else {
         setLeftState({ xp: 0, xm: 0, up: 0, um: 0 });
@@ -258,9 +296,20 @@ export default function App() {
   const startProblem = () => {
     setGameMode(GameMode.PROBLEM);
     setPhase(Phase.SOLVE);
-    generateProblem();
     setPendingType(null);
     setPendingCount(0);
+
+    if (!hasSeenTutorial) {
+      setIsTutorial(true);
+      setTutorialStep(0);
+      setSolvedCount(0);
+      setHasCredited(false);
+      setLeftState({ xp: 2, xm: 0, up: 3, um: 0 });
+      setRightState({ xp: 0, xm: 0, up: 7, um: 0 });
+    } else {
+      setIsTutorial(false);
+      generateProblem();
+    }
   };
 
   const settle = (side: SideState): SideState => {
@@ -363,9 +412,27 @@ export default function App() {
   const canDivide = (n: number) => {
     const l = leftState;
     const r = rightState;
-    const check = (s: SideState) => (s.xp - s.xm) % n === 0 && (s.up - s.um) % n === 0;
+    const check = (s: SideState) => 
+      s.xp % n === 0 && 
+      s.xm % n === 0 && 
+      s.up % n === 0 && 
+      s.um % n === 0;
     return check(l) && check(r);
   };
+
+  const largestDivisor = useMemo(() => {
+    const maxVal = Math.max(
+      leftState.xp, leftState.xm, leftState.up, leftState.um,
+      rightState.xp, rightState.xm, rightState.up, rightState.um
+    );
+    if (maxVal < 2) return null;
+    for (let n = maxVal; n >= 2; n--) {
+      if (canDivide(n)) {
+        return n;
+      }
+    }
+    return null;
+  }, [leftState, rightState]);
 
   const renderXStones = (state: SideState, prefix: string) => {
     const items: React.ReactNode[] = [];
@@ -422,6 +489,13 @@ export default function App() {
             </button>
         )}
 
+        {gameMode === GameMode.PROBLEM && phase !== Phase.MODE_SELECT && (
+            <div className="absolute top-6 right-6 z-40 bg-indigo-50 border border-indigo-110 rounded-2xl px-4 py-2.5 flex items-center gap-2 text-indigo-700 font-bold shadow-sm select-none animate-fade-in">
+                <Check size={16} className="text-indigo-600 animate-pulse" strokeWidth={3} />
+                <span className="text-xs">해결한 문제: <strong className="text-sm font-black text-indigo-800">{solvedCount}개</strong></span>
+            </div>
+        )}
+
         {phase === Phase.MODE_SELECT ? (
            <div className="flex-1 flex flex-col items-center justify-center py-32 px-12 text-center gap-12 bg-white">
                 <div className="space-y-4">
@@ -455,6 +529,67 @@ export default function App() {
             {/* Top: Equation */}
             <EquationDisplay left={leftState} right={rightState} />
 
+            {isTutorial && (
+              <div className="mx-8 mb-6 p-5 bg-gradient-to-r from-[#eff6ff] to-[#f5f3ff] border-2 border-blue-200 rounded-3xl flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm animate-fade-in relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-1.5 h-full bg-gradient-to-b from-blue-500 to-indigo-500"></div>
+                <div className="flex items-start gap-4 flex-1">
+                  <div className="w-10 h-10 bg-indigo-600 rounded-2xl flex items-center justify-center text-white font-extrabold text-base shrink-0 shadow-md">
+                    {tutorialStep === 0 ? "🎯" : tutorialStep}
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="text-slate-800 font-extrabold text-base flex items-center gap-1.5">
+                      {tutorialStep === 0 && "💡 시작하기: 방정식 풀이의 목표"}
+                      {tutorialStep === 1 && "💡 1단계: 양변에 -1 돌 추가하기"}
+                      {tutorialStep === 2 && "💡 2단계: 돌 상쇄하기 (정리)"}
+                      {tutorialStep === 3 && "💡 3단계: 양변 나누어 해 구하기"}
+                    </h4>
+                    
+                    {tutorialStep === 0 ? (
+                      <>
+                        {/* Goal Explanation */}
+                        <div className="mt-2.5 mb-2.5 bg-indigo-50/80 border border-indigo-100 rounded-2xl px-3.5 py-2.5 text-xs font-bold text-indigo-800 flex items-start gap-2 shadow-sm">
+                          <span className="text-sm shrink-0">🎯</span>
+                          <div className="text-left leading-relaxed">
+                            <span className="text-indigo-950 font-black">[방정식 풀이의 최종 목표]</span> x의 무게(값)를 알아내기 위해 <strong className="text-indigo-700 font-black underline decoration-indigo-300 underline-offset-2">한쪽 저울에는 x 돌 1개만</strong>, <strong className="text-indigo-700 font-black underline decoration-indigo-300 underline-offset-2">다른 쪽 저울에는 숫자 돌만</strong> 남겨두는 것입니다!
+                          </div>
+                        </div>
+                        <p className="text-slate-600 text-sm font-bold leading-relaxed text-left">
+                          2x + 3 = 7 이라는 방정식을 단계별로 저울의 규칙을 이용해 함께 풀어보겠습니다. 아래의 [튜토리얼 시작하기] 버튼을 눌러 다음 단계로 넘어가봅시다!
+                        </p>
+                      </>
+                    ) : (
+                      <p className="text-slate-600 text-sm font-bold leading-relaxed text-left mt-2">
+                        {tutorialStep === 1 && "2x + 3 = 7에서 좌변의 +3을 없애기 위해, 양변에 [ -1 ] 돌을 3개 추가해야 합니다. 왼쪽 돌 선택 상자에서 [-1]을 클릭하고 개수를 3으로 조정한 다음, [추가하기]를 눌러보세요!"}
+                        {tutorialStep === 2 && "저울 위에 서로 반대되는 +1 돌과 -1 돌이 함께 있습니다. 우측 아래의 [상쇄하기] 버튼을 눌러 돌을 깔끔하게 서로 상쇄시켜 보세요!"}
+                        {tutorialStep === 3 && "양변이 2x = 4가 되었습니다. x의 값을 구하기 위해 양쪽 저울의 돌을 2로 나누어야 합니다. 곱하기/나누기 상자에서 [ ÷2 ] 버튼을 눌러 최종 해를 구하세요!"}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                
+                <div className="flex flex-col sm:flex-row gap-3 shrink-0 items-center">
+                  {tutorialStep === 0 && (
+                    <button
+                      onClick={() => setTutorialStep(1)}
+                      className="px-5 py-3 bg-indigo-600 hover:bg-indigo-700 text-[#ffffff] font-extrabold text-sm rounded-2xl transition-all shadow-md active:scale-95 cursor-pointer flex items-center gap-1.5"
+                    >
+                      튜토리얼 시작하기
+                    </button>
+                  )}
+                  <button 
+                    onClick={() => {
+                      setIsTutorial(false);
+                      setHasSeenTutorial(true);
+                      generateProblem();
+                    }}
+                    className="px-4 py-2.5 bg-white text-slate-500 hover:text-slate-700 hover:bg-slate-50 font-bold text-xs rounded-xl transition-all border border-slate-200 shadow-sm whitespace-nowrap cursor-pointer hover:border-slate-300"
+                  >
+                    튜토리얼 건너뛰기
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* Center: Scale */}
             <div className="relative h-[420px] flex flex-col items-center justify-center px-12 bg-white mb-4">
                 {/* Success Announcement */}
@@ -474,14 +609,19 @@ export default function App() {
                                 >
                                     <Check size={40} strokeWidth={4} />
                                 </motion.div>
-                                <h3 className="text-3xl font-black text-slate-800 mb-2">성공!</h3>
-                                <p className="text-slate-500 font-bold text-lg mb-8">방정식의 해를 찾았습니다.</p>
+                                <h3 className="text-3xl font-black text-slate-800 mb-6">성공!</h3>
                                 
                                 <div className="flex flex-col gap-3 w-full">
                                     {gameMode === GameMode.PROBLEM && (
                                         <button 
-                                            onClick={generateProblem}
-                                            className="w-full py-4 bg-blue-600 text-white font-bold rounded-2xl shadow-lg hover:bg-blue-700 transition-all"
+                                            onClick={() => {
+                                                if (isTutorial) {
+                                                    setIsTutorial(false);
+                                                    setHasSeenTutorial(true);
+                                                }
+                                                generateProblem();
+                                            }}
+                                            className="w-full py-4 bg-blue-600 text-white font-bold rounded-2xl shadow-lg hover:bg-blue-700 transition-all text-sm"
                                         >
                                             다음 문제
                                         </button>
@@ -489,18 +629,20 @@ export default function App() {
                                     {gameMode === GameMode.PRACTICE && (
                                         <button 
                                             onClick={() => setPhase(Phase.SETUP)}
-                                            className="w-full py-4 bg-blue-600 text-white font-bold rounded-2xl shadow-lg hover:bg-blue-700 transition-all flex items-center justify-center gap-2"
+                                            className="w-full py-4 bg-blue-600 text-white font-bold rounded-2xl shadow-lg hover:bg-blue-700 transition-all flex items-center justify-center gap-2 text-sm"
                                         >
                                             <RotateCcw size={18} />
                                             돌 다시 배치하기
                                         </button>
                                     )}
-                                    <button 
-                                        onClick={() => setPhase(Phase.MODE_SELECT)}
-                                        className="w-full py-4 bg-slate-100 text-slate-600 font-bold rounded-2xl hover:bg-slate-200 transition-all border border-slate-200"
-                                    >
-                                        모드 선택
-                                    </button>
+                                    {gameMode !== GameMode.PROBLEM && (
+                                        <button 
+                                            onClick={() => setPhase(Phase.MODE_SELECT)}
+                                            className="w-full py-4 bg-slate-100 text-slate-600 font-bold rounded-2xl hover:bg-slate-200 transition-all border border-slate-200 text-sm"
+                                        >
+                                            모드 선택
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                         </motion.div>
@@ -659,6 +801,10 @@ export default function App() {
                     pendingType === StoneType.ONE_MINUS 
                       ? 'border-red-500 bg-red-50/20 shadow-sm' 
                       : 'border-transparent hover:bg-slate-50'
+                  } ${
+                    isTutorial && tutorialStep === 1 && pendingType !== StoneType.ONE_MINUS
+                      ? 'ring-4 ring-blue-500 ring-offset-2 animate-pulse scale-105'
+                      : ''
                   }`}
                 >
                   <Stone type={StoneType.ONE_MINUS} />
@@ -729,6 +875,10 @@ export default function App() {
                     pendingType && pendingCount > 0
                       ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-md active:scale-98 animate-pulse cursor-pointer'
                       : 'bg-slate-100 text-slate-300 cursor-not-allowed'
+                  } ${
+                    isTutorial && tutorialStep === 1 && pendingType === StoneType.ONE_MINUS && pendingCount >= 3
+                      ? 'ring-4 ring-blue-500 ring-offset-1 animate-pulse scale-102 font-extrabold text-[#ffffff]'
+                      : ''
                   }`}
                 >
                   추가하기
@@ -757,19 +907,26 @@ export default function App() {
                 <div className="w-[1px] bg-slate-100 self-stretch my-2"></div>
 
                 {/* Divisors column */}
-                <div className="flex flex-col gap-1.5 items-center justify-center">
+                <div className="flex flex-col gap-1.5 items-center justify-center w-[104px]">
                   <span className="text-[10px] font-black text-slate-400">나누기</span>
-                  <div className="grid grid-cols-2 gap-2">
-                    {[2, 3, 5, 7].map(n => (
+                  <div className="w-full h-[88px] flex items-center justify-center">
+                    {largestDivisor ? (
                       <button 
-                        key={n} 
-                        disabled={!canDivide(n)}
-                        onClick={() => divideBoth(n)} 
-                        className="w-12 h-10 border border-slate-200 rounded-lg font-bold text-blue-600 hover:bg-blue-50 transition-colors disabled:opacity-20 flex items-center justify-center active:scale-95 text-sm"
+                        onClick={() => divideBoth(largestDivisor)} 
+                        className={`w-full h-full border border-slate-200 rounded-lg font-bold text-blue-600 hover:bg-blue-50 transition-colors active:scale-95 flex flex-col items-center justify-center shadow-sm ${
+                          isTutorial && tutorialStep === 3 && largestDivisor === 2
+                            ? 'ring-4 ring-blue-500 ring-offset-2 animate-pulse scale-105 bg-blue-50'
+                            : ''
+                        }`}
                       >
-                        ÷{n}
+                        <span className="text-base font-black">÷{largestDivisor}</span>
+                        <span className="text-[9px] text-blue-500 font-bold mt-0.5">나누기 {largestDivisor}</span>
                       </button>
-                    ))}
+                    ) : (
+                      <div className="w-full h-full border border-dashed border-slate-200 bg-slate-50/50 rounded-lg flex items-center justify-center">
+                        {/* Empty/blank placeholder to keep layout fully stable */}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -783,6 +940,10 @@ export default function App() {
                     canSettle()
                       ? 'border-indigo-100 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 hover:border-indigo-250 shadow-sm shadow-indigo-100 cursor-pointer animate-pulse-slow'
                       : 'border-slate-100 text-slate-300 bg-slate-50 opacity-40 cursor-not-allowed'
+                  } ${
+                    isTutorial && tutorialStep === 2 && canSettle()
+                      ? 'ring-4 ring-indigo-500 ring-offset-2 animate-pulse scale-105 border-indigo-200 bg-indigo-100'
+                      : ''
                   }`}
                 >
                     <span className="text-sm font-black">상쇄하기</span>
