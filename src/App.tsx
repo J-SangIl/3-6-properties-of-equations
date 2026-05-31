@@ -41,8 +41,8 @@ enum GameMode {
 
 // --- Components ---
 
-const Pentagram = ({ label, color }: { label: string; color: string }) => (
-  <div className={`relative flex items-center justify-center w-10 h-10 ${color} drop-shadow-sm`}>
+const Pentagram = ({ label, color, isNeutralizing }: { label: string; color: string; isNeutralizing?: boolean }) => (
+  <div className={`relative flex items-center justify-center w-10 h-10 ${color} drop-shadow-sm ${isNeutralizing ? 'animate-stone-blink' : ''}`}>
     <svg viewBox="0 0 100 100" className="absolute inset-0 w-full h-full fill-current">
       <path d="M50 8 L92 38 L76 88 L24 88 L8 38 Z" />
     </svg>
@@ -50,19 +50,19 @@ const Pentagram = ({ label, color }: { label: string; color: string }) => (
   </div>
 );
 
-const Circle = ({ label, color }: { label: string; color: string }) => (
-  <div className={`relative flex items-center justify-center w-10 h-10 rounded-full ${color} drop-shadow-sm`}>
+const Circle = ({ label, color, isNeutralizing }: { label: string; color: string; isNeutralizing?: boolean }) => (
+  <div className={`relative flex items-center justify-center w-10 h-10 rounded-full ${color} drop-shadow-sm ${isNeutralizing ? 'animate-stone-blink' : ''}`}>
     <span className="text-white font-bold text-sm select-none">{label}</span>
   </div>
 );
 
-const Stone = ({ type }: { type: StoneType }) => {
+const Stone = ({ type, isNeutralizing }: { type: StoneType; isNeutralizing?: boolean }) => {
   const content = (() => {
     switch (type) {
-      case StoneType.X_PLUS: return <Pentagram label="x" color="text-blue-600" />;
-      case StoneType.X_MINUS: return <Pentagram label="-x" color="text-red-600" />;
-      case StoneType.ONE_PLUS: return <Circle label="1" color="bg-blue-600" />;
-      case StoneType.ONE_MINUS: return <Circle label="-1" color="bg-red-600" />;
+      case StoneType.X_PLUS: return <Pentagram label="x" color="text-blue-600" isNeutralizing={isNeutralizing} />;
+      case StoneType.X_MINUS: return <Pentagram label="-x" color="text-red-600" isNeutralizing={isNeutralizing} />;
+      case StoneType.ONE_PLUS: return <Circle label="1" color="bg-blue-600" isNeutralizing={isNeutralizing} />;
+      case StoneType.ONE_MINUS: return <Circle label="-1" color="bg-red-600" isNeutralizing={isNeutralizing} />;
     }
   })();
 
@@ -442,17 +442,30 @@ export default function App() {
 
   const renderXStones = (state: SideState, prefix: string) => {
     const items: React.ReactNode[] = [];
+    const cancelCount = Math.min(state.xp, state.xm);
     for (let i = 0; i < state.xp; i++) {
+        let isNeutralizing = i >= (state.xp - cancelCount);
+        if (isTutorial && tutorialStep === 3) {
+            if (i >= Math.ceil(state.xp / 2)) {
+                isNeutralizing = true;
+            }
+        }
         items.push(
             <motion.div layout key={`${prefix}-xp-${i}`}>
-                <Stone type={StoneType.X_PLUS} />
+                <Stone type={StoneType.X_PLUS} isNeutralizing={isNeutralizing} />
             </motion.div>
         );
     }
     for (let i = 0; i < state.xm; i++) {
+        let isNeutralizing = i >= (state.xm - cancelCount);
+        if (isTutorial && tutorialStep === 3) {
+            if (i >= Math.ceil(state.xm / 2)) {
+                isNeutralizing = true;
+            }
+        }
         items.push(
             <motion.div layout key={`${prefix}-xm-${i}`}>
-                <Stone type={StoneType.X_MINUS} />
+                <Stone type={StoneType.X_MINUS} isNeutralizing={isNeutralizing} />
             </motion.div>
         );
     }
@@ -461,17 +474,30 @@ export default function App() {
 
   const renderUnitStones = (state: SideState, prefix: string) => {
     const items: React.ReactNode[] = [];
+    const cancelCount = Math.min(state.up, state.um);
     for (let i = 0; i < state.up; i++) {
+        let isNeutralizing = i >= (state.up - cancelCount);
+        if (isTutorial && tutorialStep === 3) {
+            if (i >= Math.ceil(state.up / 2)) {
+                isNeutralizing = true;
+            }
+        }
         items.push(
             <motion.div layout key={`${prefix}-up-${i}`}>
-                <Stone type={StoneType.ONE_PLUS} />
+                <Stone type={StoneType.ONE_PLUS} isNeutralizing={isNeutralizing} />
             </motion.div>
         );
     }
     for (let i = 0; i < state.um; i++) {
+        let isNeutralizing = i >= (state.um - cancelCount);
+        if (isTutorial && tutorialStep === 3) {
+            if (i >= Math.ceil(state.um / 2)) {
+                isNeutralizing = true;
+            }
+        }
         items.push(
             <motion.div layout key={`${prefix}-um-${i}`}>
-                <Stone type={StoneType.ONE_MINUS} />
+                <Stone type={StoneType.ONE_MINUS} isNeutralizing={isNeutralizing} />
             </motion.div>
         );
     }

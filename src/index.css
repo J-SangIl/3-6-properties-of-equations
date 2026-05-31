@@ -23,3 +23,16 @@ body {
   border-radius: 10px;
 }
 
+@keyframes stone-blink {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.25;
+  }
+}
+
+.animate-stone-blink {
+  animation: stone-blink 1.6s ease-in-out infinite;
+}
+
