@@ -522,22 +522,22 @@ export default function App() {
                 </div>
                 <div className="flex gap-6 w-full max-w-md">
                     <button 
-                        onClick={startPractice}
-                        className="flex-1 flex flex-col items-center gap-4 p-8 bg-blue-50 border-2 border-blue-100 rounded-3xl hover:border-blue-300 hover:bg-blue-100/50 transition-all group"
-                    >
-                        <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-200 group-hover:scale-110 transition-transform">
-                            <RotateCcw size={32} />
-                        </div>
-                        <span className="text-xl font-bold text-blue-700">연습 모드</span>
-                    </button>
-                    <button 
                         onClick={startProblem}
-                        className="flex-1 flex flex-col items-center gap-4 p-8 bg-indigo-50 border-2 border-indigo-100 rounded-3xl hover:border-indigo-300 hover:bg-indigo-100/50 transition-all group"
+                        className="flex-1 flex flex-col items-center gap-4 p-8 bg-indigo-50 border-2 border-indigo-100 rounded-3xl hover:border-indigo-300 hover:bg-indigo-100/50 transition-all group lg:scale-105 cursor-pointer"
                     >
                         <div className="w-16 h-16 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-indigo-200 group-hover:scale-110 transition-transform">
                             <Check size={32} />
                         </div>
                         <span className="text-xl font-bold text-indigo-700">문제 모드</span>
+                    </button>
+                    <button 
+                        onClick={startPractice}
+                        className="flex-1 flex flex-col items-center gap-4 p-8 bg-blue-50 border-2 border-blue-100 rounded-3xl hover:border-blue-300 hover:bg-blue-100/50 transition-all group cursor-pointer"
+                    >
+                        <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-200 group-hover:scale-110 transition-transform">
+                            <RotateCcw size={32} />
+                        </div>
+                        <span className="text-xl font-bold text-blue-700">자유 탐구 모드</span>
                     </button>
                 </div>
            </div>
@@ -598,9 +598,9 @@ export default function App() {
                       </h4>
                       
                       <p className="text-slate-600 text-sm font-bold leading-relaxed text-left mt-2">
-                        {tutorialStep === 1 && "왼쪽 돌 선택 상자에서 [-1] 단추를 누르고 개수를 3개로 맞춘 다음, [추가하기]를 눌러 양쪽에 똑같이 추가해 보세요!"}
-                        {tutorialStep === 2 && "양수 돌과 음수 돌이 함께 있을 때, 우측 아래의 [상쇄하기] 버튼을 누르면 반대되는 돌들이 서로 매칭되어 깔끔하게 사라집니다!"}
-                        {tutorialStep === 3 && "나누기 상자에서 [÷2]를 누르면 양 쪽 저울에 있는 돌의 개수를 2로 나눌 수 있습니다. 최종 답을 구해보세요!"}
+                        {tutorialStep === 1 && "[-1] 돌을 3번 누른 다음, [추가하기]버튼을 눌러 양쪽에 추가해주세요."}
+                        {tutorialStep === 2 && "[상쇄하기] 버튼을 누르면 부호가 서로 반대인 돌이 서로 상쇄되어 사라집니다!"}
+                        {tutorialStep === 3 && "[÷2]를 누르면 양 쪽 저울에 있는 돌의 개수를 2로 나눌 수 있습니다. 최종 답을 구해보세요!"}
                       </p>
                     </div>
                   </div>
