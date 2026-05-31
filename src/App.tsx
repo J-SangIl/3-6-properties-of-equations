@@ -10,7 +10,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { RotateCcw, Check, ArrowLeft } from 'lucide-react';
+import { RotateCcw, Check, ArrowLeft, HelpCircle } from 'lucide-react';
 
 // --- Constants & Types ---
 
@@ -293,6 +293,15 @@ export default function App() {
     setPendingCount(0);
   };
 
+  const startTutorial = () => {
+    setIsTutorial(true);
+    setTutorialStep(0);
+    setPendingType(null);
+    setPendingCount(0);
+    setLeftState({ xp: 2, xm: 0, up: 3, um: 0 });
+    setRightState({ xp: 0, xm: 0, up: 7, um: 0 });
+  };
+
   const startProblem = () => {
     setGameMode(GameMode.PROBLEM);
     setPhase(Phase.SOLVE);
@@ -300,12 +309,9 @@ export default function App() {
     setPendingCount(0);
 
     if (!hasSeenTutorial) {
-      setIsTutorial(true);
-      setTutorialStep(0);
       setSolvedCount(0);
       setHasCredited(false);
-      setLeftState({ xp: 2, xm: 0, up: 3, um: 0 });
-      setRightState({ xp: 0, xm: 0, up: 7, um: 0 });
+      startTutorial();
     } else {
       setIsTutorial(false);
       generateProblem();
@@ -482,15 +488,27 @@ export default function App() {
         {phase !== Phase.MODE_SELECT && (
             <button 
                 onClick={() => setPhase(Phase.MODE_SELECT)}
-                className="absolute top-6 left-6 z-50 p-3 bg-white border border-slate-100 rounded-2xl text-slate-400 hover:text-blue-600 hover:border-blue-100 transition-all shadow-sm group"
+                className={`absolute top-6 left-6 z-50 p-3 bg-white border border-slate-100 rounded-2xl text-slate-400 hover:text-blue-600 hover:border-blue-100 transition-all shadow-sm group ${isTutorial && tutorialStep !== 0 ? 'opacity-20 pointer-events-none' : ''}`}
                 title="모드 선택"
+                disabled={isTutorial && tutorialStep !== 0}
             >
                 <ArrowLeft size={20} className="group-hover:-translate-x-0.5 transition-transform" />
             </button>
         )}
 
+        {gameMode === GameMode.PROBLEM && phase !== Phase.MODE_SELECT && !isTutorial && (
+            <button 
+                onClick={startTutorial}
+                className="absolute top-6 left-20 z-50 p-3 bg-white border border-slate-100  rounded-2xl text-slate-500 hover:text-indigo-600 hover:border-indigo-100 transition-all shadow-sm text-xs font-black flex items-center gap-1.5 cursor-pointer"
+                title="튜토리얼 다시 보기"
+            >
+                <HelpCircle size={20} className="text-indigo-500 animate-pulse-slow" />
+                <span className="hidden sm:inline">튜토리얼 다시 보기</span>
+            </button>
+        )}
+
         {gameMode === GameMode.PROBLEM && phase !== Phase.MODE_SELECT && (
-            <div className="absolute top-6 right-6 z-40 bg-indigo-50 border border-indigo-110 rounded-2xl px-4 py-2.5 flex items-center gap-2 text-indigo-700 font-bold shadow-sm select-none animate-fade-in">
+            <div className={`absolute top-6 right-6 z-40 bg-indigo-50 border border-indigo-110 rounded-2xl px-4 py-2.5 flex items-center gap-2 text-indigo-700 font-bold shadow-sm select-none animate-fade-in ${isTutorial && tutorialStep !== 0 ? 'opacity-20 pointer-events-none' : ''}`}>
                 <Check size={16} className="text-indigo-600 animate-pulse" strokeWidth={3} />
                 <span className="text-xs">해결한 문제: <strong className="text-sm font-black text-indigo-800">{solvedCount}개</strong></span>
             </div>
@@ -524,108 +542,133 @@ export default function App() {
                 </div>
            </div>
         ) : (
-          <div className="flex flex-col flex-1">
-            
-            {/* Top: Equation */}
-            <EquationDisplay left={leftState} right={rightState} />
-
-            {isTutorial && (
-              <div className="mx-8 mb-6 p-5 bg-gradient-to-r from-[#eff6ff] to-[#f5f3ff] border-2 border-blue-200 rounded-3xl flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm animate-fade-in relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-1.5 h-full bg-gradient-to-b from-blue-500 to-indigo-500"></div>
-                <div className="flex items-start gap-4 flex-1">
-                  <div className="w-10 h-10 bg-indigo-600 rounded-2xl flex items-center justify-center text-white font-extrabold text-base shrink-0 shadow-md">
-                    {tutorialStep === 0 ? "🎯" : tutorialStep}
+          <div className="flex flex-col flex-1 relative">
+            {isTutorial && tutorialStep === 0 && (
+              <div className="absolute inset-0 bg-slate-900/30 backdrop-blur-[6px] z-50 flex items-center justify-center p-6 animate-fade-in">
+                <div className="bg-white p-8 md:p-10 rounded-[2.5rem] shadow-2xl border border-blue-100 max-w-md w-full text-center flex flex-col items-center gap-6">
+                  <div className="w-16 h-16 bg-indigo-600 rounded-3xl flex items-center justify-center text-white text-3xl shadow-lg shadow-indigo-150 animate-pulse animate-bounce-slow">
+                    🎯
                   </div>
-                  <div className="flex-1">
-                    <h4 className="text-slate-800 font-extrabold text-base flex items-center gap-1.5">
-                      {tutorialStep === 0 && "💡 시작하기: 방정식 풀이의 목표"}
-                      {tutorialStep === 1 && "💡 1단계: 양변에 -1 돌 추가하기"}
-                      {tutorialStep === 2 && "💡 2단계: 돌 상쇄하기 (정리)"}
-                      {tutorialStep === 3 && "💡 3단계: 양변 나누어 해 구하기"}
-                    </h4>
-                    
-                    {tutorialStep === 0 ? (
-                      <>
-                        {/* Goal Explanation */}
-                        <div className="mt-2.5 mb-2.5 bg-indigo-50/80 border border-indigo-100 rounded-2xl px-3.5 py-2.5 text-xs font-bold text-indigo-800 flex items-start gap-2 shadow-sm">
-                          <span className="text-sm shrink-0">🎯</span>
-                          <div className="text-left leading-relaxed">
-                            <span className="text-indigo-950 font-black">[방정식 풀이의 최종 목표]</span> x의 무게(값)를 알아내기 위해 <strong className="text-indigo-700 font-black underline decoration-indigo-300 underline-offset-2">한쪽 저울에는 x 돌 1개만</strong>, <strong className="text-indigo-700 font-black underline decoration-indigo-300 underline-offset-2">다른 쪽 저울에는 숫자 돌만</strong> 남겨두는 것입니다!
-                          </div>
-                        </div>
-                        <p className="text-slate-600 text-sm font-bold leading-relaxed text-left">
-                          2x + 3 = 7 이라는 방정식을 단계별로 저울의 규칙을 이용해 함께 풀어보겠습니다. 아래의 [튜토리얼 시작하기] 버튼을 눌러 다음 단계로 넘어가봅시다!
-                        </p>
-                      </>
-                    ) : (
-                      <p className="text-slate-600 text-sm font-bold leading-relaxed text-left mt-2">
-                        {tutorialStep === 1 && "2x + 3 = 7에서 좌변의 +3을 없애기 위해, 양변에 [ -1 ] 돌을 3개 추가해야 합니다. 왼쪽 돌 선택 상자에서 [-1]을 클릭하고 개수를 3으로 조정한 다음, [추가하기]를 눌러보세요!"}
-                        {tutorialStep === 2 && "저울 위에 서로 반대되는 +1 돌과 -1 돌이 함께 있습니다. 우측 아래의 [상쇄하기] 버튼을 눌러 돌을 깔끔하게 서로 상쇄시켜 보세요!"}
-                        {tutorialStep === 3 && "양변이 2x = 4가 되었습니다. x의 값을 구하기 위해 양쪽 저울의 돌을 2로 나누어야 합니다. 곱하기/나누기 상자에서 [ ÷2 ] 버튼을 눌러 최종 해를 구하세요!"}
-                      </p>
-                    )}
+                  <div>
+                    <h3 className="text-2xl font-black text-slate-800 tracking-tight">💡 시작하기</h3>
+                    <p className="text-slate-600 text-sm font-bold leading-relaxed mt-4 px-2 text-center">
+                      x의 무게를 알아내기 위해 한쪽 저울에는 x 돌 1개만, 다른 쪽 저울에는 숫자 돌만 남겨주세요!
+                    </p>
                   </div>
-                </div>
-                
-                <div className="flex flex-col sm:flex-row gap-3 shrink-0 items-center">
-                  {tutorialStep === 0 && (
+                  
+                  <div className="flex flex-col gap-2.5 w-full mt-2">
                     <button
                       onClick={() => setTutorialStep(1)}
-                      className="px-5 py-3 bg-indigo-600 hover:bg-indigo-700 text-[#ffffff] font-extrabold text-sm rounded-2xl transition-all shadow-md active:scale-95 cursor-pointer flex items-center gap-1.5"
+                      className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-[#ffffff] font-extrabold text-sm rounded-2xl transition-all shadow-md active:scale-[0.98] cursor-pointer flex items-center justify-center"
                     >
-                      튜토리얼 시작하기
+                      🚀 튜토리얼 시작하기
                     </button>
-                  )}
-                  <button 
-                    onClick={() => {
-                      setIsTutorial(false);
-                      setHasSeenTutorial(true);
-                      generateProblem();
-                    }}
-                    className="px-4 py-2.5 bg-white text-slate-500 hover:text-slate-700 hover:bg-slate-50 font-bold text-xs rounded-xl transition-all border border-slate-200 shadow-sm whitespace-nowrap cursor-pointer hover:border-slate-300"
-                  >
-                    튜토리얼 건너뛰기
-                  </button>
+                    <button 
+                      onClick={() => {
+                        setIsTutorial(false);
+                        setHasSeenTutorial(true);
+                        generateProblem();
+                      }}
+                      className="w-full py-3 bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-700 font-bold text-xs rounded-2xl transition-all border border-slate-200/60 cursor-pointer"
+                    >
+                      튜토리얼 건너뛰기
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
 
-            {/* Center: Scale */}
-            <div className="relative h-[420px] flex flex-col items-center justify-center px-12 bg-white mb-4">
-                {/* Success Announcement */}
-                <AnimatePresence>
-                    {isSuccess && (
-                        <motion.div 
-                            initial={{ scale: 0, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            exit={{ scale: 0, opacity: 0 }}
-                            className="absolute inset-0 z-40 bg-white/40 flex flex-col items-center justify-center p-8 text-center"
-                        >
-                            <div className="bg-white p-10 rounded-[3rem] shadow-2xl border border-slate-100 flex flex-col items-center max-w-sm">
-                                <motion.div 
-                                    animate={{ y: [0, -10, 0] }} 
-                                    transition={{ repeat: Infinity, duration: 2 }}
-                                    className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center text-white shadow-xl mb-6"
-                                >
-                                    <Check size={40} strokeWidth={4} />
-                                </motion.div>
-                                <h3 className="text-3xl font-black text-slate-800 mb-6">성공!</h3>
-                                
-                                <div className="flex flex-col gap-3 w-full">
-                                    {gameMode === GameMode.PROBLEM && (
-                                        <button 
-                                            onClick={() => {
-                                                if (isTutorial) {
-                                                    setIsTutorial(false);
-                                                    setHasSeenTutorial(true);
-                                                }
-                                                generateProblem();
-                                            }}
-                                            className="w-full py-4 bg-blue-600 text-white font-bold rounded-2xl shadow-lg hover:bg-blue-700 transition-all text-sm"
-                                        >
-                                            다음 문제
-                                        </button>
-                                    )}
+            <div className={`flex flex-col flex-1 transition-all duration-300 ${isTutorial && tutorialStep === 0 ? 'filter blur-md pointer-events-none opacity-40 select-none' : ''}`}>
+              
+              {/* Top: Equation */}
+              <EquationDisplay left={leftState} right={rightState} />
+
+              {isTutorial && tutorialStep > 0 && (
+                <div className="mx-8 mb-6 p-5 bg-gradient-to-r from-[#eff6ff] to-[#f5f3ff] border-2 border-blue-200 rounded-3xl flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm animate-fade-in relative overflow-hidden">
+                  <div className="absolute top-0 left-0 w-1.5 h-full bg-gradient-to-b from-blue-500 to-indigo-500"></div>
+                  <div className="flex items-start gap-4 flex-1">
+                    <div className="w-10 h-10 bg-indigo-600 rounded-2xl flex items-center justify-center text-white font-extrabold text-base shrink-0 shadow-md">
+                      {tutorialStep}
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="text-slate-800 font-extrabold text-base flex items-center gap-1.5">
+                        {tutorialStep === 1 && "💡 1단계: 양변에 -1 돌 추가하기"}
+                        {tutorialStep === 2 && "💡 2단계: 돌 상쇄하기 (정리)"}
+                        {tutorialStep === 3 && "💡 3단계: 양변 나누어 해 구하기"}
+                      </h4>
+                      
+                      <p className="text-slate-600 text-sm font-bold leading-relaxed text-left mt-2">
+                        {tutorialStep === 1 && "왼쪽 돌 선택 상자에서 [-1] 단추를 누르고 개수를 3개로 맞춘 다음, [추가하기]를 눌러 양쪽에 똑같이 추가해 보세요!"}
+                        {tutorialStep === 2 && "양수 돌과 음수 돌이 함께 있을 때, 우측 아래의 [상쇄하기] 버튼을 누르면 반대되는 돌들이 서로 매칭되어 깔끔하게 사라집니다!"}
+                        {tutorialStep === 3 && "오른쪽 나누기 상자에서 [ ÷2 ]를 누르면 양팔저울의 무게를 똑같이 2로 나눌 수 있습니다. 최종 해를 구해보세요!"}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex flex-col sm:flex-row gap-3 shrink-0 items-center">
+                    <button 
+                      onClick={() => {
+                        setIsTutorial(false);
+                        setHasSeenTutorial(true);
+                        generateProblem();
+                      }}
+                      className="px-4 py-2.5 bg-white text-slate-500 hover:text-slate-700 hover:bg-slate-50 font-bold text-xs rounded-xl transition-all border border-slate-200 shadow-sm whitespace-nowrap cursor-pointer hover:border-slate-300"
+                    >
+                      튜토리얼 건너뛰기
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Center: Scale */}
+              <div className="relative h-[420px] flex flex-col items-center justify-center px-12 bg-white mb-4">
+                  {/* Success Announcement */}
+                  <AnimatePresence>
+                      {isSuccess && (
+                          <motion.div 
+                              initial={{ scale: 0, opacity: 0 }}
+                              animate={{ scale: 1, opacity: 1 }}
+                              exit={{ scale: 0, opacity: 0 }}
+                              className="absolute inset-0 z-40 bg-white/40 flex flex-col items-center justify-center p-8 text-center animate-fade-in"
+                          >
+                              <div className="bg-white p-10 rounded-[3rem] shadow-2xl border border-slate-200/80 flex flex-col items-center max-w-sm">
+                                  <motion.div 
+                                      animate={{ y: [0, -10, 0] }} 
+                                      transition={{ repeat: Infinity, duration: 2 }}
+                                      className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center text-white shadow-xl mb-6"
+                                  >
+                                      <Check size={40} strokeWidth={4} />
+                                  </motion.div>
+                                  <h3 className="text-3xl font-black text-slate-800 mb-4">성공!</h3>
+
+                                  <div className="mb-6 p-4 bg-emerald-50 border border-emerald-100 rounded-2xl text-emerald-800 text-xs font-bold leading-relaxed text-left">
+                                      {isTutorial ? (
+                                        <>
+                                          🎉 축하합니다! 드디어 해결하셨습니다.<br/><br/>
+                                          우리의 <strong>최종 목표</strong>는 이렇게 <strong className="text-emerald-950 font-black">한쪽 저울에는 x 돌 1개만, 다른 쪽 저울에는 숫자 돌만</strong> 남겨두어 x의 무게를 알아내는 것입니다!
+                                        </>
+                                      ) : (
+                                        <>
+                                          🎉 축하합니다! <strong className="text-emerald-950 font-black">한쪽 저울에는 x 돌 1개만, 다른 쪽 저울에는 숫자 돌만</strong> 남겨야 한다는 양팔저울 해결 규칙에 잘 맞춰 방정식 풀이에 완벽히 성공하셨습니다!
+                                        </>
+                                      )}
+                                  </div>
+                                  
+                                  <div className="flex flex-col gap-3 w-full">
+                                      {gameMode === GameMode.PROBLEM && (
+                                          <button 
+                                              onClick={() => {
+                                                  if (isTutorial) {
+                                                      setIsTutorial(false);
+                                                      setHasSeenTutorial(true);
+                                                  }
+                                                  generateProblem();
+                                              }}
+                                              className="w-full py-4 bg-blue-600 text-white font-bold rounded-2xl shadow-lg hover:bg-blue-700 transition-all text-sm"
+                                          >
+                                              다음 문제
+                                          </button>
+                                      )}
                                     {gameMode === GameMode.PRACTICE && (
                                         <button 
                                             onClick={() => setPhase(Phase.SETUP)}
@@ -746,10 +789,17 @@ export default function App() {
           ) : (
             <div className="flex flex-wrap gap-4 justify-center max-w-4xl mx-auto">
               {/* Box 1: Stone Selection & Click Incrementer */}
-              <div className="p-5 bg-white rounded-2xl shadow-sm border border-slate-100 grid grid-cols-2 gap-3 select-none justify-center items-center">
+              <div className={`p-5 bg-white rounded-2xl shadow-sm border border-slate-100 grid grid-cols-2 gap-3 select-none justify-center items-center transition-all duration-300 ${
+                isTutorial && tutorialStep > 0
+                  ? (tutorialStep === 1 
+                      ? 'relative z-30 ring-4 ring-indigo-500/30 scale-[1.02] shadow-xl' 
+                      : 'opacity-20 pointer-events-none filter blur-[1px] scale-[0.98]') 
+                  : ''
+              }`}>
                 <button 
                   onClick={() => handleStoneSelect(StoneType.X_PLUS)} 
-                  className={`hover:scale-110 active:scale-95 transition-all p-2 rounded-xl relative group border-2 ${
+                  disabled={isTutorial && tutorialStep === 1}
+                  className={`hover:scale-110 active:scale-95 transition-all p-2 rounded-xl relative group border-2 ${isTutorial && tutorialStep === 1 ? 'opacity-30 cursor-not-allowed' : ''} ${
                     pendingType === StoneType.X_PLUS 
                       ? 'border-blue-500 bg-blue-50/20 shadow-sm' 
                       : 'border-transparent hover:bg-slate-50'
@@ -765,7 +815,8 @@ export default function App() {
                 
                 <button 
                   onClick={() => handleStoneSelect(StoneType.X_MINUS)} 
-                  className={`hover:scale-110 active:scale-95 transition-all p-2 rounded-xl relative group border-2 ${
+                  disabled={isTutorial && tutorialStep === 1}
+                  className={`hover:scale-110 active:scale-95 transition-all p-2 rounded-xl relative group border-2 ${isTutorial && tutorialStep === 1 ? 'opacity-30 cursor-not-allowed' : ''} ${
                     pendingType === StoneType.X_MINUS 
                       ? 'border-red-500 bg-red-50/20 shadow-sm' 
                       : 'border-transparent hover:bg-slate-50'
@@ -781,7 +832,8 @@ export default function App() {
 
                 <button 
                   onClick={() => handleStoneSelect(StoneType.ONE_PLUS)} 
-                  className={`hover:scale-110 active:scale-95 transition-all p-2 rounded-xl relative group border-2 ${
+                  disabled={isTutorial && tutorialStep === 1}
+                  className={`hover:scale-110 active:scale-95 transition-all p-2 rounded-xl relative group border-2 ${isTutorial && tutorialStep === 1 ? 'opacity-30 cursor-not-allowed' : ''} ${
                     pendingType === StoneType.ONE_PLUS 
                       ? 'border-blue-500 bg-blue-50/20 shadow-sm' 
                       : 'border-transparent hover:bg-slate-50'
@@ -803,7 +855,7 @@ export default function App() {
                       : 'border-transparent hover:bg-slate-50'
                   } ${
                     isTutorial && tutorialStep === 1 && pendingType !== StoneType.ONE_MINUS
-                      ? 'ring-4 ring-blue-500 ring-offset-2 animate-pulse scale-105'
+                      ? 'ring-4 ring-indigo-500 ring-offset-2 animate-pulse scale-105 shadow-md shadow-indigo-100 bg-indigo-50/50'
                       : ''
                   }`}
                 >
@@ -817,7 +869,13 @@ export default function App() {
               </div>
 
               {/* Box 2: Staging Action panel (Add to both side button) */}
-              <div className="p-4 bg-white rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center justify-between w-[220px] h-[196px] select-none">
+              <div className={`p-4 bg-white rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center justify-between w-[220px] h-[196px] select-none transition-all duration-300 ${
+                isTutorial && tutorialStep > 0
+                  ? (tutorialStep === 1 
+                      ? 'relative z-30 ring-4 ring-indigo-500/30 scale-[1.02] shadow-xl' 
+                      : 'opacity-20 pointer-events-none filter blur-[1px] scale-[0.98]') 
+                  : ''
+              }`}>
                 {/* Visual stones list preview */}
                 <div className={`p-2 rounded-xl w-full h-[96px] min-h-[96px] max-h-[96px] flex items-center justify-center ${
                   pendingType && pendingCount > 0 
@@ -877,7 +935,7 @@ export default function App() {
                       : 'bg-slate-100 text-slate-300 cursor-not-allowed'
                   } ${
                     isTutorial && tutorialStep === 1 && pendingType === StoneType.ONE_MINUS && pendingCount >= 3
-                      ? 'ring-4 ring-blue-500 ring-offset-1 animate-pulse scale-102 font-extrabold text-[#ffffff]'
+                      ? 'ring-4 ring-indigo-500 ring-offset-1 animate-pulse scale-102 font-extrabold text-[#ffffff]'
                       : ''
                   }`}
                 >
@@ -886,7 +944,13 @@ export default function App() {
               </div>
 
               {/* Combined Box 4: Multipliers & Divisors */}
-              <div className="p-4 bg-white rounded-2xl shadow-sm border border-slate-100 flex gap-4 select-none h-[196px] items-center">
+              <div className={`p-4 bg-white rounded-2xl shadow-sm border border-slate-100 flex gap-4 select-none h-[196px] items-center transition-all duration-300 ${
+                isTutorial && tutorialStep > 0
+                  ? (tutorialStep === 3 
+                      ? 'relative z-30 ring-4 ring-indigo-500/30 scale-[1.02] shadow-xl' 
+                      : 'opacity-20 pointer-events-none filter blur-[1px] scale-[0.98]') 
+                  : ''
+              }`}>
                 {/* Multipliers column */}
                 <div className="flex flex-col gap-1.5 items-center justify-center">
                   <span className="text-[10px] font-black text-slate-400">곱하기</span>
@@ -915,7 +979,7 @@ export default function App() {
                         onClick={() => divideBoth(largestDivisor)} 
                         className={`w-full h-full border border-slate-200 rounded-lg font-bold text-blue-600 hover:bg-blue-50 transition-colors active:scale-95 flex flex-col items-center justify-center shadow-sm ${
                           isTutorial && tutorialStep === 3 && largestDivisor === 2
-                            ? 'ring-4 ring-blue-500 ring-offset-2 animate-pulse scale-105 bg-blue-50'
+                            ? 'ring-4 ring-indigo-500 ring-offset-2 animate-pulse scale-105 bg-indigo-50 text-indigo-700 border-indigo-200'
                             : ''
                         }`}
                       >
@@ -932,7 +996,13 @@ export default function App() {
               </div>
 
               {/* Box 3: Settle / Simplify */}
-              <div className="p-4 bg-white rounded-2xl shadow-sm border border-slate-100 flex items-center justify-center">
+              <div className={`p-4 bg-white rounded-2xl shadow-sm border border-slate-100 flex items-center justify-center transition-all duration-300 ${
+                isTutorial && tutorialStep > 0
+                  ? (tutorialStep === 2 
+                      ? 'relative z-30 ring-4 ring-indigo-500/30 scale-[1.02] shadow-xl' 
+                      : 'opacity-20 pointer-events-none filter blur-[1px] scale-[0.98]') 
+                  : ''
+              }`}>
                 <button 
                   onClick={handleSettleBoth} 
                   disabled={isAnimating || !canSettle()}
@@ -954,7 +1024,9 @@ export default function App() {
               </div>
 
                 {/* Phase 2 Side Controls */}
-                <div className="flex flex-col justify-center">
+                <div className={`flex flex-col justify-center transition-all duration-300 ${
+                  isTutorial && tutorialStep > 0 ? 'opacity-20 pointer-events-none filter blur-[1px]' : ''
+                }`}>
                     {gameMode === GameMode.PRACTICE ? (
                         <button 
                             onClick={() => setPhase(Phase.SETUP)} 
@@ -975,6 +1047,7 @@ export default function App() {
                 </div>
             </div>
           )}
+        </div>
         </div>
         </div>
         )}
