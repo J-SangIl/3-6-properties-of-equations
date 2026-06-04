@@ -158,6 +158,9 @@ export default function App() {
   // Compute solvedCount based on current level score
   const solvedCount = useMemo(() => levelScores[level] || 0, [level, levelScores]);
 
+  const isLevel2Locked = useMemo(() => (levelScores[1] || 0) < 10, [levelScores]);
+  const isLevel3Locked = useMemo(() => (levelScores[1] || 0) < 10 || (levelScores[2] || 0) < 5, [levelScores]);
+
   const handleStoneSelect = (type: StoneType) => {
     if (pendingType === type) {
       setPendingCount(prev => Math.min(10, prev + 1));
@@ -234,7 +237,7 @@ export default function App() {
         setLevelScores(prev => {
           const nextScore = (prev[level] || 0) + 1;
           
-          if (level === 1 && nextScore === 15) {
+          if (level === 1 && nextScore === 10) {
             setShowLevel2UnlockModal(true);
           }
           
@@ -259,7 +262,15 @@ export default function App() {
         }
       }
     } else if (level === 2) {
-      // Step 2 is the active interactive division step
+      if (tutorialStep === 1) {
+        if (leftState.xm >= 2 && rightState.xm >= 2) {
+          setTutorialStep(2);
+        }
+      } else if (tutorialStep === 2) {
+        if (leftState.xp === 1 && leftState.xm === 0 && rightState.xm === 2) {
+          setTutorialStep(3);
+        }
+      }
     } else if (level === 3) {
       if (tutorialStep === 1) {
         // Proceed to level 3 tutorial step 2 when Left x is 3 and Right x is 0 (fully settled/simplified)
@@ -310,9 +321,9 @@ export default function App() {
     const score = levelScores[level] || 0;
 
     if (level === 1) {
-      // Level 1: x + b = d, d = x + b (until 10 pts)
-      // -x + b = d, d = -x + b (from 11 pts)
-      const isXMinus = score >= 11;
+      // Level 1: x + b = d, d = x + b (until 7 pts)
+      // -x + b = d, d = -x + b (from 8 pts)
+      const isXMinus = score >= 7;
       const coeff = isXMinus ? -1 : 1;
       
       const solution = getRandomInt(-5, 5, [0]);
@@ -843,33 +854,29 @@ export default function App() {
               <div className="text-center max-w-xl mb-10 mt-6 select-none">
                 <span className="px-3.5 py-1 text-xs font-black bg-blue-100/60 text-blue-700 rounded-full">문제 해결 학습</span>
                 <h2 className="text-3xl font-black text-slate-800 tracking-tight mt-3">학습 단계를 선택하세요</h2>
-                <p className="text-slate-500 font-medium text-sm mt-2">차례대로 학습을 완료하며 일차방정식의 해를 구하는 비법을 정복해보세요!</p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-4xl px-4 mb-8">
                  {/* Level 1 Card */}
-                 <div className={`bg-white border-2 rounded-3xl p-6 shadow-sm hover:shadow-md hover:scale-[1.01] transition-all flex flex-col justify-between group ${levelScores[1] >= 15 ? 'border-emerald-200 bg-emerald-50/5' : 'border-slate-100'}`}>
+                 <div className={`bg-white border-2 rounded-3xl p-6 shadow-sm hover:shadow-md hover:scale-[1.01] transition-all flex flex-col justify-between group ${levelScores[1] >= 10 ? 'border-emerald-200 bg-emerald-50/5' : 'border-slate-100'}`}>
                     <div>
                       <div className="flex justify-between items-start">
                         <span className="text-2xl font-black text-blue-500 font-mono">01</span>
-                        {levelScores[1] >= 15 && (
+                        {levelScores[1] >= 10 && (
                           <span className="px-2.5 py-0.5 text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full">★ 완전 정복</span>
                         )}
                       </div>
                       <h3 className="text-lg font-black text-slate-800 tracking-tight mt-4">1단계: 덧셈과 뺄셈</h3>
                       <p className="text-xs font-bold text-slate-400 mt-1">x ± a = b 형태</p>
-                      <p className="text-slate-500 text-xs leading-relaxed mt-3 font-semibold text-left">
-                        식 뒤의 숫자를 정리하기 위해 저울 양쪽에 반대 부호 돌들을 더해 상쇄하는 방법을 배웁니다.
-                      </p>
                     </div>
 
                     <div className="mt-6 pt-5 border-t border-slate-100/60 select-none">
                       <div className="flex items-center justify-between text-xs font-bold text-slate-500 mb-2">
                         <span>학습 점수</span>
-                        <span className="text-blue-600 font-black">{levelScores[1]} / 15점</span>
+                        <span className="text-blue-600 font-black">{levelScores[1]} / 10점</span>
                       </div>
                       <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden mb-4">
-                        <div className="h-full bg-blue-600 transition-all duration-500" style={{ width: `${Math.min(100, (levelScores[1] / 15) * 100)}%` }}></div>
+                        <div className="h-full bg-blue-600 transition-all duration-500" style={{ width: `${Math.min(100, (levelScores[1] / 10) * 100)}%` }}></div>
                       </div>
                       <button 
                         onClick={() => {
@@ -882,7 +889,7 @@ export default function App() {
                             generateProblem();
                           }
                         }}
-                        className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-[#ffffff] text-xs font-black rounded-xl shadow-md cursor-pointer transition-transform duration-200 hover:scale-102 active:scale-98"
+                        className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-[#ffffff] text-xs font-black rounded-xl shadow-md cursor-pointer transition-transform duration-200 hover:scale-102 active:scale-98 text-center"
                       >
                         학습 시작하기
                       </button>
@@ -890,19 +897,18 @@ export default function App() {
                  </div>
 
                  {/* Level 2 Card */}
-                 <div className={`bg-white border-2 rounded-3xl p-6 shadow-sm hover:shadow-md hover:scale-[1.01] transition-all flex flex-col justify-between group ${levelScores[1] < 15 ? 'opacity-85 border-slate-100/60' : 'border-slate-100'}`}>
+                 <div className={`bg-white border-2 rounded-3xl p-6 shadow-sm hover:shadow-md hover:scale-[1.01] transition-all flex flex-col justify-between group ${isLevel2Locked ? 'opacity-65 border-slate-100 bg-slate-50/50' : levelScores[2] >= 5 ? 'border-emerald-200 bg-emerald-50/5' : 'border-slate-100'}`}>
                     <div>
                       <div className="flex justify-between items-start">
                         <span className="text-2xl font-black text-indigo-500 font-mono">02</span>
-                        {levelScores[1] < 15 && (
-                          <span className="px-2 py-0.5 text-[9px] font-black bg-amber-50 text-amber-700 border border-amber-200 rounded-full">🔓 Locked (1단계 완료 필요)</span>
-                        )}
+                        {isLevel2Locked ? (
+                          <span className="px-2 py-0.5 text-[9px] font-black bg-amber-50 text-amber-700 border border-amber-200 rounded-full">🔒 Locked (1단계 완료 필요)</span>
+                        ) : levelScores[2] >= 5 ? (
+                          <span className="px-2.5 py-0.5 text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full">★ 완전 정복</span>
+                        ) : null}
                       </div>
                       <h3 className="text-lg font-black text-slate-800 tracking-tight mt-4">2단계: 곱셈과 나눗셈</h3>
                       <p className="text-xs font-bold text-slate-400 mt-1">ax = b 형태 (a &gt; 1)</p>
-                      <p className="text-slate-500 text-xs leading-relaxed mt-3 font-semibold text-left">
-                        식에 곱해져 있는 x를 1개만 남기기 위해 양변을 똑같은 무리로 똑같이 나누는 방법을 배웁니다.
-                      </p>
                     </div>
 
                     <div className="mt-6 pt-5 border-t border-slate-100/60 font-medium">
@@ -911,6 +917,7 @@ export default function App() {
                         <span className="text-indigo-600 font-black">{levelScores[2]}점</span>
                       </div>
                       <button 
+                        disabled={isLevel2Locked}
                         onClick={() => {
                           setLevel(2);
                           setPhase(Phase.SOLVE);
@@ -921,7 +928,7 @@ export default function App() {
                             generateProblem();
                           }
                         }}
-                        className="w-full mt-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-[#ffffff] text-xs font-black rounded-xl shadow-md cursor-pointer transition-transform duration-200 hover:scale-102 active:scale-98"
+                        className={`w-full mt-4 py-2.5 text-xs font-black rounded-xl shadow-md transition-transform duration-200 text-center ${isLevel2Locked ? 'bg-slate-200 text-slate-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700 text-[#ffffff] hover:scale-102 active:scale-98 cursor-pointer'}`}
                       >
                         학습 시작하기
                       </button>
@@ -929,16 +936,18 @@ export default function App() {
                  </div>
 
                  {/* Level 3 Card */}
-                 <div className="bg-white border-2 border-slate-100 rounded-3xl p-6 shadow-sm hover:shadow-md hover:scale-[1.01] transition-all flex flex-col justify-between group">
+                 <div className={`bg-white border-2 rounded-3xl p-6 shadow-sm hover:shadow-md hover:scale-[1.01] transition-all flex flex-col justify-between group ${isLevel3Locked ? 'opacity-65 border-slate-100 bg-slate-50/50' : 'border-slate-100'}`}>
                     <div>
                       <div className="flex justify-between items-start">
                         <span className="text-2xl font-black text-violet-500 font-mono">03</span>
+                        {isLevel3Locked && (
+                          <span className="px-2 py-0.5 text-[9px] font-black bg-amber-50 text-amber-700 border border-amber-200 rounded-full">
+                            🔒 Locked ({levelScores[1] < 10 ? '1단계 완료 필요' : '2단계 5점 필요'})
+                          </span>
+                        )}
                       </div>
                       <h3 className="text-lg font-black text-slate-800 tracking-tight mt-4">3단계: 종합 마스터</h3>
                       <p className="text-xs font-bold text-slate-400 mt-1">ax + b = cx + d 형태</p>
-                      <p className="text-slate-500 text-xs leading-relaxed mt-3 font-semibold text-left">
-                        항들을 이항하고 정리하는 모든 단계들을 통달하여 끝판왕 식들을 정복해보세요!
-                      </p>
                     </div>
 
                     <div className="mt-6 pt-5 border-t border-slate-100/60 font-medium">
@@ -947,6 +956,7 @@ export default function App() {
                         <span className="text-violet-600 font-black">{levelScores[3]}점</span>
                       </div>
                       <button 
+                        disabled={isLevel3Locked}
                         onClick={() => {
                           setLevel(3);
                           setPhase(Phase.SOLVE);
@@ -957,7 +967,7 @@ export default function App() {
                             generateProblem();
                           }
                         }}
-                        className="w-full mt-4 py-2.5 bg-violet-600 hover:bg-violet-700 text-[#ffffff] text-xs font-black rounded-xl shadow-md cursor-pointer transition-transform duration-200 hover:scale-102 active:scale-98"
+                        className={`w-full mt-4 py-2.5 text-xs font-black rounded-xl shadow-md transition-transform duration-200 text-center ${isLevel3Locked ? 'bg-slate-200 text-slate-400 cursor-not-allowed' : 'bg-violet-600 hover:bg-violet-700 text-[#ffffff] hover:scale-102 active:scale-98 cursor-pointer'}`}
                       >
                         학습 시작하기
                       </button>
@@ -1392,8 +1402,37 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* Action Buttons Row: Add on the Left, Settle on the Right inside Staging panel */}
+                {/* Action Buttons Row: Settle on the Left, Add on the Right inside Staging panel */}
                 <div className="flex gap-2 w-full mt-2">
+                  {/* Settle/Neutralize Button */}
+                  <button 
+                    onClick={handleSettleBoth} 
+                    disabled={isAnimating || !canSettle()}
+                    className={`flex-1 py-2 font-black text-xs rounded-xl border transition-all active:scale-95 text-center flex items-center justify-center ${
+                      canSettle()
+                        ? 'border-indigo-150 bg-indigo-50 text-indigo-700 hover:bg-indigo-100/90 hover:border-indigo-250 shadow-sm cursor-pointer'
+                        : 'border-slate-100 text-slate-300 bg-slate-50 opacity-40 cursor-not-allowed'
+                    } ${
+                      isTutorial && level === 1 && tutorialStep === 2 && canSettle()
+                        ? 'ring-2 ring-indigo-500 animate-pulse scale-102 border-indigo-200 bg-indigo-100 font-black text-sm'
+                        : ''
+                    } ${
+                      isTutorial && level === 2 && tutorialStep === 2 && canSettle()
+                        ? 'ring-2 ring-indigo-500 animate-pulse scale-102 border-indigo-200 bg-indigo-100 font-black text-sm'
+                        : ''
+                    } ${
+                      isTutorial && level === 3 && tutorialStep === 1 && canSettle() && leftState.xp === 3 && rightState.xp === 1
+                        ? 'ring-2 ring-indigo-500 animate-pulse scale-102 border-indigo-200 bg-indigo-100'
+                        : ''
+                    } ${
+                      isTutorial && level === 3 && tutorialStep === 2 && canSettle() && leftState.up === 6 && leftState.um === 6
+                        ? 'ring-2 ring-indigo-500 animate-pulse scale-102 border-indigo-200 bg-indigo-100'
+                        : ''
+                    }`}
+                  >
+                    상쇄하기
+                  </button>
+
                   {/* Add (Apply) Button */}
                   <button
                     onClick={handleApplyPending}
@@ -1425,35 +1464,6 @@ export default function App() {
                   >
                     추가하기
                   </button>
-
-                  {/* Settle/Neutralize Button */}
-                  <button 
-                    onClick={handleSettleBoth} 
-                    disabled={isAnimating || !canSettle()}
-                    className={`flex-1 py-2 font-black text-xs rounded-xl border transition-all active:scale-95 text-center flex items-center justify-center ${
-                      canSettle()
-                        ? 'border-indigo-150 bg-indigo-50 text-indigo-700 hover:bg-indigo-100/90 hover:border-indigo-250 shadow-sm cursor-pointer'
-                        : 'border-slate-100 text-slate-300 bg-slate-50 opacity-40 cursor-not-allowed'
-                    } ${
-                      isTutorial && level === 1 && tutorialStep === 2 && canSettle()
-                        ? 'ring-2 ring-indigo-500 animate-pulse scale-102 border-indigo-200 bg-indigo-100 font-black text-sm'
-                        : ''
-                    } ${
-                      isTutorial && level === 2 && tutorialStep === 2 && canSettle()
-                        ? 'ring-2 ring-indigo-500 animate-pulse scale-102 border-indigo-200 bg-indigo-100 font-black text-sm'
-                        : ''
-                    } ${
-                      isTutorial && level === 3 && tutorialStep === 1 && canSettle() && leftState.xp === 3 && rightState.xp === 1
-                        ? 'ring-2 ring-indigo-500 animate-pulse scale-102 border-indigo-200 bg-indigo-100'
-                        : ''
-                    } ${
-                      isTutorial && level === 3 && tutorialStep === 2 && canSettle() && leftState.up === 6 && leftState.um === 6
-                        ? 'ring-2 ring-indigo-500 animate-pulse scale-102 border-indigo-200 bg-indigo-100'
-                        : ''
-                    }`}
-                  >
-                    상쇄하기
-                  </button>
                 </div>
               </div>
 
@@ -1461,7 +1471,7 @@ export default function App() {
               <div className={`p-4 bg-white rounded-2xl shadow-sm border border-slate-100 flex gap-4 select-none h-[196px] items-center transition-all duration-300 ${
                 !isBox4Active ? 'opacity-20 pointer-events-none filter blur-[1px]' : ''
               } ${
-                isTutorial && level === 2 && tutorialStep === 2 && !level2DivideDelay
+                isTutorial && level === 2 && tutorialStep === 4 && !level2DivideDelay
                   ? 'relative z-30 ring-4 ring-indigo-500/30 scale-[1.02] shadow-xl'
                   : ''
               } ${
@@ -1502,11 +1512,11 @@ export default function App() {
                       <button 
                         onClick={() => divideBoth(largestDivisor)} 
                         disabled={
-                          (isTutorial && level === 2 && tutorialStep === 2 && largestDivisor !== 3) ||
+                          (isTutorial && level === 2 && tutorialStep === 4 && largestDivisor !== 3) ||
                           (isTutorial && level === 3 && tutorialStep === 3 && largestDivisor !== 3)
                         }
                         className={`w-full h-full border border-slate-200 rounded-lg font-black text-blue-600 hover:bg-blue-50 transition-colors active:scale-95 flex flex-col items-center justify-center shadow-sm ${
-                          (isTutorial && level === 2 && tutorialStep === 2 && largestDivisor === 3) ||
+                          (isTutorial && level === 2 && tutorialStep === 4 && largestDivisor === 3) ||
                           (isTutorial && level === 3 && tutorialStep === 3 && largestDivisor === 3)
                             ? 'ring-4 ring-indigo-500 ring-offset-2 animate-pulse scale-103 bg-indigo-50 text-indigo-750 border-indigo-200 font-extrabold text-base'
                             : 'text-sm'
@@ -1565,7 +1575,7 @@ export default function App() {
             <div>
               <h3 className="text-2xl font-black text-slate-800 tracking-tight">축하합니다! 🔓</h3>
               <p className="text-slate-500 text-sm font-bold leading-relaxed mt-3 px-2">
-                1단계에서 <strong className="text-emerald-600 font-extrabold">15점</strong>을 달성해 2단계: 곱셈과 나눗셈 학습이 해제되었습니다!
+                1단계에서 <strong className="text-emerald-600 font-extrabold">10점</strong>을 달성해 2단계: 곱셈과 나눗셈 학습이 해제되었습니다!
               </p>
             </div>
             <button
